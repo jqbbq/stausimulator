@@ -29,11 +29,13 @@ public class Configuration {
 	private static Map<Property, Number> init() {
 		Map<Property, Number> map = new HashMap<>();
 
+		map.put(Property.INTERVAL, new Integer(1000));
+
 		map.put(Property.ROADS, new Integer(2));
 		map.put(Property.LANES, new Integer(2));
 		map.put(Property.CELLS, new Integer(20));
 		map.put(Property.MAX_SPEED, new Integer(5));
-		
+
 		map.put(Property.DENSITY, new Double(0.2));
 		map.put(Property.PROBABILITY, new Double(0.0));
 

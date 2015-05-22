@@ -1,10 +1,9 @@
 /*
  * 
  */
-package edu.hm.am.stausimulator.view;
+package edu.hm.am.stausimulator.view.panel;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -12,7 +11,6 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
-import edu.hm.am.stausimulator.Simulator;
 import edu.hm.am.stausimulator.model.Road;
 import edu.hm.am.stausimulator.view.model.Lane;
 
@@ -54,7 +52,7 @@ public class CellularAutomataPanel extends JPanel {
 		super.paint(g);
 		g.setColor(Color.BLACK);
 		g.setFont(new Font("Arial", Font.PLAIN, 10));
-		g.drawString("Road "+road.getId(), 2, 10);
+		g.drawString("Straﬂe " + road.getId() + " mit " + road.getLanes().size() + " Spuren", 2, 10);
 		for (Lane lane : lanes) {
 			lane.draw(g);
 		}

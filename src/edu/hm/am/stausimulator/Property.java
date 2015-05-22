@@ -2,6 +2,6 @@ package edu.hm.am.stausimulator;
 
 public enum Property {
 
-	ROADS, LANES, CELLS, MAX_SPEED, DENSITY, PROBABILITY 
+	ROADS, LANES, CELLS, MAX_SPEED, DENSITY, PROBABILITY, INTERVAL
 
 }

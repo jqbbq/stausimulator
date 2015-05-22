@@ -15,24 +15,23 @@ public class Road {
 	/** The lanes. */
 	private final List<Lane> lanes;
 
-	/**
-	 * Instantiates a new road.
-	 */
-	public Road() {
-		this(1);
-	}
+	private final int id;
 
 	/**
 	 * Instantiates a new road.
 	 *
-	 * @param lanes
-	 *            the lanes
+	 * @param lanes the lanes
 	 */
-	public Road(int lanes) {
+	public Road(int id, int lanes) {
+		this.id = id;
 		this.lanes = new ArrayList<Lane>(lanes);
 		for (int i = 0; i < lanes; i++) {
 			this.lanes.add(new Lane());
 		}
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public List<Lane> getLanes() {

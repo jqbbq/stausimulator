@@ -43,7 +43,7 @@ public class SimulatorView {
 		window.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		window.setLayout(new GridLayout(2, 1));
 
-		window.add(new CellularAutomataPanel(instance, WINDOW_WIDTH, WINDOW_HEIGHT));
+		//window.add(new CellularAutomataPanel(instance, WINDOW_WIDTH, WINDOW_HEIGHT));
 
 		JButton updateButton = new JButton("Update");
 		updateButton.addActionListener(new ActionListener() {

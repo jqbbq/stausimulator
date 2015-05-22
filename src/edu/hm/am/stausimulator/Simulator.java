@@ -3,7 +3,10 @@
  */
 package edu.hm.am.stausimulator;
 
+import java.util.List;
+
 import edu.hm.am.stausimulator.model.Road;
+
 
 // TODO: Auto-generated Javadoc
 /**
@@ -11,33 +14,37 @@ import edu.hm.am.stausimulator.model.Road;
  */
 public class Simulator {
 
-	private SimulatorData data;
-
-	private SimulatorModel model;
+	private Run model;
 
 	/**
 	 * Instantiates a new simulator.
 	 */
 	public Simulator() {
-		data = new SimulatorData();
-		model = new SimulatorModel();
+		init();
 	}
 
-	public Road getRoad() {
-		return model.getRoad();
+	public List<Road> getRoads(){
+		return model.getRoads();
 	}
-
+	
+	public Road getRoad(int road){
+		return model.getRoad(road);
+	}
+	
+	public int getStep() {
+		return model.getStep();
+	}
+	
 	public void nextStep() {
 		model.nextStep();
 	}
-
-	/**
-	 * The main method.
-	 *
-	 * @param args
-	 *            the arguments
-	 */
-	public static void main(String[] args) {
-		new Simulator();
+	
+	public boolean reset() {
+		return init();
+	}
+	
+	private boolean init(){
+		model = new Run();
+		return true;
 	}
 }

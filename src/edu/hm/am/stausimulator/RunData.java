@@ -3,11 +3,11 @@ package edu.hm.am.stausimulator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimulatorData {
+public class RunData {
 
 	private List<List<Integer>> data;
 
-	public SimulatorData() {
+	public RunData() {
 		data = new ArrayList<List<Integer>>();
 	}
 

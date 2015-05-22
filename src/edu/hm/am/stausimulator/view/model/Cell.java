@@ -46,11 +46,9 @@ public class Cell extends Drawable {
 					/ 2, imageWidth, imageHeight, null);
 
 			// draw speed
-			if (speed > 3) {
-				g.setColor(Color.BLACK);
-			} else if (speed > 0) {
-				g.setColor(Color.ORANGE);
-			} else {
+			g.setColor(Color.BLACK);
+		
+			if (speed == 0) {
 				g.setColor(Color.RED);
 			}
 

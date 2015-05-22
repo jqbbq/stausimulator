@@ -10,6 +10,7 @@ import java.util.Random;
 
 import edu.hm.am.stausimulator.Configuration;
 import edu.hm.am.stausimulator.Property;
+import edu.hm.am.stausimulator.RunData;
 import edu.hm.am.stausimulator.VehiclePool;
 
 // TODO: Auto-generated Javadoc
@@ -36,6 +37,8 @@ public class Lane {
 	/** The cells. */
 	private List<Cell> cells;
 
+	private RunData data;
+
 	/**
 	 * Instantiates a new lane.
 	 */
@@ -46,8 +49,7 @@ public class Lane {
 	/**
 	 * Instantiates a new lane.
 	 *
-	 * @param direction
-	 *            the direction
+	 * @param direction the direction
 	 */
 	public Lane(Direction direction) {
 		this(direction, Configuration.getProperty(Property.CELLS).intValue());
@@ -56,10 +58,8 @@ public class Lane {
 	/**
 	 * Instantiates a new lane.
 	 *
-	 * @param direction
-	 *            the direction
-	 * @param cells
-	 *            the cells
+	 * @param direction the direction
+	 * @param cells the cells
 	 */
 	public Lane(Direction direction, int cells) {
 		this.direction = direction;
@@ -68,6 +68,8 @@ public class Lane {
 			this.cells.add(new Cell());
 		}
 
+		this.data = new RunData();
+		
 		double density = Configuration.getProperty(Property.DENSITY).doubleValue();
 
 		List<Vehicle> cars = VehiclePool.get((new Double(density * cells)).intValue());
@@ -108,7 +110,8 @@ public class Lane {
 			cell = it.next();
 			if (cell.isFree()) {
 				value = null;
-			} else {
+			}
+			else {
 				value = cell.getVehicle().getSpeed();
 			}
 			data.add(value);
@@ -117,6 +120,8 @@ public class Lane {
 	}
 
 	public void update() {
+		data.push(export());
+		
 		// update logic
 		Random random = new Random();
 		double probability = Configuration.getProperty(Property.PROBABILITY).doubleValue();
@@ -144,7 +149,7 @@ public class Lane {
 				}
 
 				// step 3 - randomization
-				if (random.nextDouble() <= probability) {
+				if (random.nextDouble() < probability) {
 					vehicle.slowDown();
 				}
 
@@ -167,8 +172,6 @@ public class Lane {
 				flags.add(newpos);
 			}
 		}
-
-		System.out.println(toString());
 	}
 
 	private int getDistance(int index, List<Cell> cells) {
@@ -196,7 +199,8 @@ public class Lane {
 		for (Cell cell : cells) {
 			if (cell.isFree()) {
 				sb.append("-");
-			} else {
+			}
+			else {
 				sb.append(cell.getVehicle().getSpeed());
 			}
 		}

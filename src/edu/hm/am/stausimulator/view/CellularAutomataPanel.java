@@ -5,6 +5,7 @@ package edu.hm.am.stausimulator.view;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,22 +25,13 @@ public class CellularAutomataPanel extends JPanel {
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;
 
-	private Simulator instance;
-
 	/** The road. */
 	private Road road;
 
 	private List<Lane> lanes;
 
-	public CellularAutomataPanel(Simulator instance, int width, int height) {
-		this.instance = instance;
-		Dimension d = new Dimension(width, height);
-		setMaximumSize(d);
-		setMinimumSize(d);
-		setSize(d);
-		setPreferredSize(d);
-
-		setBackground(Color.WHITE);
+	public CellularAutomataPanel(Road road) {
+		this.road = road;
 
 		init();
 
@@ -47,10 +39,9 @@ public class CellularAutomataPanel extends JPanel {
 	}
 
 	public void init() {
-		road = instance.getRoad();
 		lanes = new ArrayList<Lane>();
 
-		int laneY = 2;
+		int laneY = 12;
 
 		for (edu.hm.am.stausimulator.model.Lane lane : road.getLanes()) {
 			lanes.add(new Lane(2, laneY, lane.getCells()));
@@ -61,6 +52,9 @@ public class CellularAutomataPanel extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
+		g.setColor(Color.BLACK);
+		g.setFont(new Font("Arial", Font.PLAIN, 10));
+		g.drawString("Road "+road.getId(), 2, 10);
 		for (Lane lane : lanes) {
 			lane.draw(g);
 		}

@@ -3,14 +3,18 @@
  */
 package edu.hm.am.stausimulator.view.panel;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
+import net.miginfocom.swing.MigLayout;
+import edu.hm.am.stausimulator.Simulator;
 import edu.hm.am.stausimulator.model.Road;
 import edu.hm.am.stausimulator.view.model.Lane;
 
@@ -30,8 +34,45 @@ public class CellularAutomataPanel extends JPanel {
 
 	public CellularAutomataPanel(Road road) {
 		this.road = road;
+		setLayout(new MigLayout("insets 0", "[grow]", "[grow]"));
 
 		init();
+
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setPreferredSize(this.getSize());
+		ImagePanel image = new ImagePanel();
+
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+		scrollPane.setViewportView(image);
+
+		add(scrollPane, "cell 0 0,grow");
+
+		road.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				init();
+				image.repaint();
+
+				scrollPane.setPreferredSize(getSize());
+				scrollPane.revalidate();
+			}
+		});
+
+		Simulator.getInstance().addListener(new Runnable() {
+			@Override
+			public void run() {
+				image.repaint();
+			}
+		});
+
+		Simulator.getInstance().addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				image.repaint();
+			}
+		});
 
 		setVisible(true);
 	}
@@ -39,22 +80,24 @@ public class CellularAutomataPanel extends JPanel {
 	public void init() {
 		lanes = new ArrayList<Lane>();
 
-		int laneY = 12;
+		int laneY = 5;
 
 		for (edu.hm.am.stausimulator.model.Lane lane : road.getLanes()) {
-			lanes.add(new Lane(2, laneY, lane.getCells()));
-			laneY += Lane.LANE_HEIGHT + 2;
+			lanes.add(new Lane(5, laneY, lane.getCells()));
+			laneY += Lane.LANE_HEIGHT + 5;
 		}
 	}
 
-	@Override
-	public void paint(Graphics g) {
-		super.paint(g);
-		g.setColor(Color.BLACK);
-		g.setFont(new Font("Arial", Font.PLAIN, 10));
-		g.drawString("Straﬂe " + road.getId() + " mit " + road.getLanes().size() + " Spuren", 2, 10);
-		for (Lane lane : lanes) {
-			lane.draw(g);
+	private class ImagePanel extends JPanel {
+
+		private static final long serialVersionUID = -6511870709177991993L;
+
+		@Override
+		public void paint(Graphics g) {
+			super.paint(g);
+			for (Lane lane : lanes) {
+				lane.draw(g);
+			}
 		}
 	}
 }

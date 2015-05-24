@@ -1,13 +1,13 @@
-package edu.hm.am.stausimulator;
+package edu.hm.am.stausimulator.data;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RunData {
+public class RoadData {
 
 	private List<List<Integer>> data;
 
-	public RunData() {
+	public RoadData() {
 		data = new ArrayList<List<Integer>>();
 	}
 

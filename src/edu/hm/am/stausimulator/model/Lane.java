@@ -8,10 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import edu.hm.am.stausimulator.Configuration;
-import edu.hm.am.stausimulator.Property;
-import edu.hm.am.stausimulator.RunData;
-import edu.hm.am.stausimulator.VehiclePool;
+import edu.hm.am.stausimulator.data.LaneData;
+import edu.hm.am.stausimulator.factory.VehicleFactory;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -34,16 +32,18 @@ public class Lane {
 	/** The direction. */
 	private final Direction direction;
 
+	private final Road road;
+
 	/** The cells. */
 	private List<Cell> cells;
 
-	private RunData data;
+	private LaneData data;
 
 	/**
 	 * Instantiates a new lane.
 	 */
-	public Lane() {
-		this(Direction.NORTH);
+	public Lane(Road road) {
+		this(road, Direction.NORTH);
 	}
 
 	/**
@@ -51,33 +51,21 @@ public class Lane {
 	 *
 	 * @param direction the direction
 	 */
-	public Lane(Direction direction) {
-		this(direction, Configuration.getProperty(Property.CELLS).intValue());
-	}
-
-	/**
-	 * Instantiates a new lane.
-	 *
-	 * @param direction the direction
-	 * @param cells the cells
-	 */
-	public Lane(Direction direction, int cells) {
+	public Lane(Road road, Direction direction) {
+		this.road = road;
 		this.direction = direction;
-		this.cells = new ArrayList<Cell>(cells);
-		for (int i = 0; i < cells; i++) {
-			this.cells.add(new Cell());
+		data = new LaneData(road.getCells());
+		cells = new ArrayList<Cell>(road.getCells());
+		for (int i = 0; i < road.getCells(); i++) {
+			cells.add(new Cell());
 		}
 
-		this.data = new RunData();
-		
-		double density = Configuration.getProperty(Property.DENSITY).doubleValue();
-
-		List<Vehicle> cars = VehiclePool.get((new Double(density * cells)).intValue());
+		List<Vehicle> cars = VehicleFactory.createVehicles((int) (road.getDensity() * road.getCells()), road.getMaxSpeed());
 
 		Cell cell;
 		for (Vehicle car : cars) {
 			while (true) {
-				cell = this.cells.get(random.nextInt(cells));
+				cell = cells.get(random.nextInt(cells.size()));
 				if (cell.isFree()) {
 					cell.setVehicle(car);
 					break;
@@ -99,6 +87,10 @@ public class Lane {
 		return cells;
 	}
 
+	public LaneData getData() {
+		return data;
+	}
+
 	public List<Integer> export() {
 		List<Integer> data = new ArrayList<>();
 		Integer value = null;
@@ -110,8 +102,7 @@ public class Lane {
 			cell = it.next();
 			if (cell.isFree()) {
 				value = null;
-			}
-			else {
+			} else {
 				value = cell.getVehicle().getSpeed();
 			}
 			data.add(value);
@@ -120,12 +111,10 @@ public class Lane {
 	}
 
 	public void update() {
-		data.push(export());
-		
+		data.add(export());
+
 		// update logic
-		Random random = new Random();
-		double probability = Configuration.getProperty(Property.PROBABILITY).doubleValue();
-		int maxspeed = Configuration.getProperty(Property.MAX_SPEED).intValue();
+		int maxspeed = road.getMaxSpeed();
 		int distance = 0;
 
 		Cell cell;
@@ -149,7 +138,7 @@ public class Lane {
 				}
 
 				// step 3 - randomization
-				if (random.nextDouble() < probability) {
+				if (random.nextDouble() < road.getProbability()) {
 					vehicle.slowDown();
 				}
 
@@ -199,8 +188,7 @@ public class Lane {
 		for (Cell cell : cells) {
 			if (cell.isFree()) {
 				sb.append("-");
-			}
-			else {
+			} else {
 				sb.append(cell.getVehicle().getSpeed());
 			}
 		}

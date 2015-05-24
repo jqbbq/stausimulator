@@ -6,7 +6,6 @@ import java.util.List;
 public class Runner implements Runnable {
 
 	private Thread thread;
-	private String name;
 
 	private boolean paused;
 	private int interval;
@@ -14,10 +13,11 @@ public class Runner implements Runnable {
 	private List<Runnable> runnables;
 
 	public Runner(String name, int interval) {
-		this.name = name;
 		this.interval = interval;
 		paused = true;
 		runnables = new ArrayList<Runnable>();
+		thread = new Thread(this, name);
+		thread.start();
 	}
 
 	public boolean addRunnable(Runnable runnable) {
@@ -26,16 +26,15 @@ public class Runner implements Runnable {
 	}
 
 	public boolean start() {
-		if (thread == null) {
-			thread = new Thread(this, name);
-			thread.start();
-			return true;
+		if (!paused) {
+			return false;
 		}
-		return false;
+		paused = false;
+		return true;
 	}
 
 	public boolean pause() {
-		if (thread == null || paused) {
+		if (paused) {
 			return false;
 		}
 
@@ -43,20 +42,7 @@ public class Runner implements Runnable {
 		return true;
 	}
 
-	public boolean resume() {
-		if (thread == null || !paused) {
-			return false;
-		}
-
-		paused = false;
-		return true;
-	}
-
 	public boolean stop() {
-		if (thread == null) {
-			return false;
-		}
-
 		paused = true;
 		thread.interrupt();
 		thread = null;

@@ -12,7 +12,8 @@ public class Car extends Vehicle {
 	/**
 	 * Instantiates a new car.
 	 */
-	public Car() {
+	public Car(int maxspeed) {
+		super(maxspeed);
 	}
 
 }

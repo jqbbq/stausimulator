@@ -3,6 +3,7 @@
  */
 package edu.hm.am.stausimulator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
@@ -14,59 +15,95 @@ import edu.hm.am.stausimulator.model.Road;
  */
 public class Simulator extends Observable {
 
-	public static final String RESET = "reset";
-
-	private Run model;
+	private static Simulator instance;
 
 	private Runner runner;
 
-	/**
-	 * Instantiates a new simulator.
-	 */
-	public Simulator() {
-		init();
+	private List<Road> roads;
+
+	public static Simulator getInstance() {
+		if (instance == null) {
+			instance = new Simulator();
+		}
+		return instance;
 	}
 
 	public List<Road> getRoads() {
-		return model.getRoads();
+		return roads;
 	}
 
-	public Road getRoad(int road) {
-		return model.getRoad(road);
+	public Road getRoad(int index) {
+		if (index >= roads.size()) {
+			return null;
+		}
+		return roads.get(index);
 	}
 
-	public int getStep() {
-		return model.getStep();
+	public boolean addRoad(Road road) {
+		return roads.add(road);
 	}
 
-	public Run getModel() {
-		return model;
+	public boolean removeRoad(int index) {
+		if (index < roads.size()) {
+			roads.remove(index);
+			return true;
+		}
+		return false;
 	}
 
-	public Runner getRunner() {
-		return runner;
+	public boolean addListener(Runnable runnable) {
+		return runner.addRunnable(runnable);
+	}
+
+	public void start() {
+		runner.start();
+		setChanged();
+		notifyObservers("Start");
+	}
+
+	public void pause() {
+		runner.pause();
+		setChanged();
+		notifyObservers("Pause");
+	}
+
+	public void stop() {
+		runner.stop();
+		setChanged();
+		notifyObservers("Stop");
+	}
+
+	public boolean isRunning() {
+		return runner.isRunning();
+	}
+
+	public void setInterval(int interval) {
+		runner.setInterval(interval);
+		setChanged();
+		notifyObservers("Interval changed");
 	}
 
 	public void nextStep() {
-		model.nextStep();
+		for (Road road : roads) {
+			road.nextStep();
+		}
+		setChanged();
+		notifyObservers("Step");
 	}
 
-	public boolean reset() {
-		return init();
-	}
+	private Simulator() {
+		runner = new Runner("Main Runner", 1000);
+		roads = new ArrayList<Road>();
+		roads.add(new Road(1));
 
-	private boolean init() {
-		model = new Run();
-		runner = new Runner("Main", Configuration.getProperty(Property.INTERVAL).intValue());
-
-		runner.addRunnable(new Runnable() {
+		addListener(new Runnable() {
 			@Override
 			public void run() {
-				nextStep();
+				for (Road road : roads) {
+					road.nextStep();
+				}
 			}
 		});
-		runner.start();
-		return true;
 	}
 
 }

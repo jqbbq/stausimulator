@@ -1,9 +1,9 @@
 package edu.hm.am.stausimulator.view.panel;
 
 import java.awt.Color;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -18,7 +18,6 @@ import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
 import edu.hm.am.stausimulator.Simulator;
-import edu.hm.am.stausimulator.chart.LaneChart;
 import edu.hm.am.stausimulator.model.Lane;
 import edu.hm.am.stausimulator.model.Road;
 
@@ -34,10 +33,17 @@ public class RoadPanel extends JPanel {
 	private JSlider slStartingProbability = new JSlider();
 	private JSlider slProbability = new JSlider();
 
+	private Observer roadObserver;
+	private Observer simulatorObserver;
+
+	private Road road;
+
 	/**
 	 * Create the panel.
 	 */
 	public RoadPanel(Road road) {
+		this.road = road;
+
 		setBackground(Color.WHITE);
 		setLayout(new MigLayout("insets 5", "[grow]", "[50px][grow]"));
 
@@ -58,7 +64,7 @@ public class RoadPanel extends JPanel {
 			}
 		});
 
-		cbCells.setModel(new DefaultComboBoxModel<>(new Integer[] { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150 }));
+		cbCells.setModel(new DefaultComboBoxModel<>(new Integer[] { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 300, 500, 1000 }));
 		cbCells.setSelectedItem(new Integer(road.getCells()));
 		cbCells.addActionListener(new ActionListener() {
 			@Override
@@ -68,7 +74,7 @@ public class RoadPanel extends JPanel {
 			}
 		});
 
-		cbMaxSpeed.setModel(new DefaultComboBoxModel<>(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
+		cbMaxSpeed.setModel(new DefaultComboBoxModel<>(new Integer[] { 1, 2, 3, 4, 5 }));
 		cbMaxSpeed.setSelectedItem(new Integer(road.getMaxSpeed()));
 		cbMaxSpeed.addActionListener(new ActionListener() {
 			@Override
@@ -132,25 +138,21 @@ public class RoadPanel extends JPanel {
 		settings.add(slStartingProbability, "cell 4 1,alignx left,aligny top");
 		settings.add(slProbability, "cell 5 1");
 
-		JPanel cellular = new JPanel();
-
-		cellular.setBackground(Color.WHITE);
-		cellular.setLayout(new GridLayout(1, 1, 0, 0));
-		cellular.add(new CellularAutomataPanel(road));
-
-		JPanel chart = new JPanel();
-		chart.setLayout(new GridLayout(0, 1, 0, 0));
-		chart.setBackground(Color.WHITE);
-
-		for (Lane lane : road.getLanes()) {
-			chart.add(new LaneChart(lane.getData(), chart.getSize()));
-		}
-
 		JPanel cellularTab = new JPanel();
 		cellularTab.setBackground(Color.WHITE);
-		cellularTab.setLayout(new MigLayout("", "[grow][300px]", "[grow]"));
-		cellularTab.add(cellular, "cell 0 0,grow");
-		cellularTab.add(chart, "cell 1 0,grow");
+		cellularTab.setLayout(new MigLayout("", "[grow]", "[grow]"));
+		cellularTab.add(new CellularAutomataPanel(road), "cell 0 0,grow");
+
+		JTabbedPane vdrTabbedPane = new JTabbedPane();
+		List<Lane> lanes = road.getLanes();
+		for (int i = 1; i <= lanes.size(); i++) {
+			vdrTabbedPane.addTab("Lane " + i, new VDRChartPanel(lanes.get(i - 1)));
+		}
+
+		JPanel vdrTab = new JPanel();
+		vdrTab.setBackground(Color.WHITE);
+		vdrTab.setLayout(new MigLayout("", "[grow]", "[grow]"));
+		vdrTab.add(vdrTabbedPane, "cell 0 0,grow");
 
 		JPanel chartsTab = new JPanel();
 		chartsTab.setLayout(new MigLayout("gap 0,insets 0", "[grow][grow][grow]", "[grow][grow]"));
@@ -164,13 +166,26 @@ public class RoadPanel extends JPanel {
 		chartsTab.add(new ChartPanel(null), "cell 2 1,grow");
 
 		JTabbedPane tabbedPane = new JTabbedPane();
-		tabbedPane.addTab("Cellular model", null, cellularTab, null);
+		tabbedPane.addTab("Cellular", null, cellularTab, null);
+		tabbedPane.addTab("VDR Chart", null, vdrTab, null);
 		tabbedPane.addTab("Charts", null, chartsTab, null);
 
 		add(settings, "cell 0 0,grow");
 		add(tabbedPane, "cell 0 1,grow");
 
-		Simulator.getInstance().addObserver(new Observer() {
+		roadObserver = new Observer() {
+
+			@Override
+			public void update(Observable o, Object arg) {
+				vdrTabbedPane.removeAll();
+				List<Lane> lanes = road.getLanes();
+				for (int i = 1; i <= lanes.size(); i++) {
+					vdrTabbedPane.addTab("Lane " + i, new VDRChartPanel(lanes.get(i - 1)));
+				}
+			}
+		};
+
+		simulatorObserver = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
 				if ("Start".equals(arg)) {
@@ -185,6 +200,16 @@ public class RoadPanel extends JPanel {
 					slDensity.setEnabled(true);
 				}
 			}
-		});
+		};
+
+		road.addObserver(roadObserver);
+		Simulator.getInstance().addObserver(simulatorObserver);
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		road.deleteObserver(roadObserver);
+		Simulator.getInstance().deleteObserver(simulatorObserver);
 	}
 }

@@ -1,34 +1,41 @@
 package edu.hm.am.stausimulator.view;
 
 import java.awt.EventQueue;
-import java.awt.GridLayout;
-import java.util.Observable;
-import java.util.Observer;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
-import javax.swing.ScrollPaneLayout;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
+import edu.hm.am.stausimulator.Defaults;
 import edu.hm.am.stausimulator.Simulator;
 import edu.hm.am.stausimulator.model.Road;
-import edu.hm.am.stausimulator.view.panel.CellularAutomataPanel;
-import edu.hm.am.stausimulator.view.panel.ChartPanel;
-import edu.hm.am.stausimulator.view.panel.SettingsPanel;
+import edu.hm.am.stausimulator.view.panel.RoadPanel;
 
 public class View {
 
-	private Simulator simulator;
+	// TODO: Remove debug path
+	private final JFileChooser fileChooser = new JFileChooser(new File("C:/Users/Luca/Documents/Studium/Angewandte Mathematik/5. Nagel-Schreckenberg/data"));
+
+	private Simulator instance;
 
 	private JFrame frame;
-
-	private JPanel cellularLivePreviewPanel;
-	private JPanel chartLivePreviewPanel;
-
-	private JTabbedPane previewPanel;
 
 	/**
 	 * Launch the application.
@@ -51,7 +58,6 @@ public class View {
 	 * Create the application.
 	 */
 	public View() {
-		simulator = new Simulator();
 		initialize();
 	}
 
@@ -61,52 +67,133 @@ public class View {
 	private void initialize() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-				| UnsupportedLookAndFeelException e) {
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
 			e.printStackTrace();
 		}
 
-		previewPanel = new JTabbedPane(JTabbedPane.TOP);
+		instance = Simulator.getInstance();
 
-		cellularLivePreviewPanel = new JPanel();
-		cellularLivePreviewPanel.setLayout(new ScrollPaneLayout());
-		cellularLivePreviewPanel.setLayout(new GridLayout(0, 1, 0, 0));
+		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-		for (Road road : simulator.getRoads()) {
-			cellularLivePreviewPanel.add(new CellularAutomataPanel(road));
+		JMenuBar menuBar = new JMenuBar();
+		JMenu mnActions = new JMenu("Actions");
+
+		JMenuItem mntmSave = new JMenuItem("Save");
+		JMenuItem mntmReset = new JMenuItem("Reset");
+		JMenuItem mntmAddRoad = new JMenuItem("Add Road");
+		JMenuItem mntmRemoveRoad = new JMenuItem("Delete Road");
+		JMenuItem mntmImport = new JMenuItem("Import");
+		JMenuItem mntmExport = new JMenuItem("Export");
+
+		JButton btnSingleStep = new JButton();
+		btnSingleStep.setToolTipText("Single Step");
+		btnSingleStep.setIcon(new ImageIcon(ImageLoader.get("step.png")));
+
+		JButton btnRun = new JButton();
+		btnRun.setToolTipText("Play");
+		btnRun.setIcon(new ImageIcon(ImageLoader.get("play.png")));
+
+		JSpinner spInterval = new JSpinner();
+		spInterval.setModel(new SpinnerNumberModel(Defaults.INTERVAL, 10, 2000, 10));
+		spInterval.setToolTipText("Interval");
+		spInterval.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				instance.setInterval(((Integer) spInterval.getValue()).intValue());
+			}
+		});
+
+		JPanel panel = new JPanel();
+		panel.setLayout(new MigLayout("insets 0", "[20px,fill][20px,fill][75px,fill]", "[20px]"));
+		panel.add(btnSingleStep, "cell 0 0,grow");
+		panel.add(btnRun, "cell 1 0,grow");
+		panel.add(spInterval, "cell 2 0,grow");
+
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+
+		mnActions.add(mntmSave);
+		mnActions.add(mntmReset);
+		mnActions.add(mntmAddRoad);
+		mnActions.add(mntmRemoveRoad);
+		mnActions.add(mntmImport);
+		mnActions.add(mntmExport);
+
+		mntmSave.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				int returnVal = fileChooser.showOpenDialog(frame);
+
+				if (returnVal == JFileChooser.APPROVE_OPTION) {
+					File directory = fileChooser.getSelectedFile();
+					instance.save(directory);
+					JOptionPane.showMessageDialog(frame, "Saved");
+				}
+			}
+		});
+		mntmAddRoad.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Road road = new Road(4);
+				RoadPanel panel = new RoadPanel(road);
+				Simulator.getInstance().addRoad(road);
+				tabbedPane.addTab("Road " + (tabbedPane.getTabCount() + 1), panel);
+			}
+		});
+		mntmRemoveRoad.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				tabbedPane.remove(tabbedPane.getSelectedIndex());
+			}
+		});
+
+		menuBar.add(mnActions);
+
+		for (Road road : instance.getRoads()) {
+			tabbedPane.addTab("Road " + road.getId(), new RoadPanel(road));
 		}
-
-		chartLivePreviewPanel = new JPanel();
-		chartLivePreviewPanel.setLayout(new MigLayout("gap 0, insets 0", "[grow,fill][grow,fill]", "[grow,fill]"));
-
-		chartLivePreviewPanel.add(new ChartPanel(simulator.getModel()), "cell 0 0,grow");
-		chartLivePreviewPanel.add(new ChartPanel(simulator.getModel()), "cell 1 0,grow");
-
-		previewPanel.addTab("Cellular Live Preview", null, cellularLivePreviewPanel, null);
-		previewPanel.addTab("Charts Live Preview", null, chartLivePreviewPanel, null);
 
 		frame = new JFrame();
 		frame.setTitle("Nagel-Schreckenberg Stausimulation");
-		frame.setBounds(100, 100, 761, 503);
+		frame.setBounds(10, 10, 1200, 700);
+		frame.setResizable(false);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLayout(new MigLayout("", "[700px,grow]", "[60px][grow][350px]"));
+		frame.setJMenuBar(menuBar);
+		frame.getContentPane().setLayout(new MigLayout("insets 5", "[grow]", "[25px][grow]"));
+		frame.getContentPane().add(panel, "cell 0 0");
+		frame.getContentPane().add(tabbedPane, "cell 0 1,grow");
 
-		frame.add(new SettingsPanel(simulator), "cell 0 0,grow");
-		frame.add(previewPanel, "cell 0 1 1 2,grow");
-
-		simulator.getRunner().addRunnable(new Runnable() {
+		btnSingleStep.addActionListener(new ActionListener() {
 			@Override
-			public void run() {
-				cellularLivePreviewPanel.repaint();
+			public void actionPerformed(ActionEvent e) {
+				instance.nextStep();
 			}
 		});
 
-		simulator.addObserver(new Observer() {
+		btnRun.addActionListener(new ActionListener() {
 			@Override
-			public void update(Observable o, Object arg) {
-				frame.repaint();
+			public void actionPerformed(ActionEvent e) {
+				boolean running = instance.isRunning();
+
+				mntmSave.setEnabled(running);
+				mntmReset.setEnabled(running);
+				mntmAddRoad.setEnabled(running);
+				mntmRemoveRoad.setEnabled(running);
+				mntmImport.setEnabled(running);
+				mntmExport.setEnabled(running);
+				spInterval.setEnabled(running);
+				btnSingleStep.setEnabled(running);
+
+				btnRun.setToolTipText(running ? "Start" : "Stop");
+				btnRun.setIcon(new ImageIcon(ImageLoader.get(running ? "play.png" : "stop.png")));
+
+				if (running) {
+					instance.stop();
+				} else {
+					instance.start();
+				}
+
 			}
 		});
-
 	}
 }

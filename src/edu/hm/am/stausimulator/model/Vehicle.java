@@ -17,6 +17,8 @@ public abstract class Vehicle {
 	private int maxspeed;
 	private int speed;
 
+	private boolean lingered;
+
 	/**
 	 * Instantiates a new vehicle.
 	 *
@@ -45,6 +47,10 @@ public abstract class Vehicle {
 		this.speed = speed;
 	}
 
+	public void setLingered(boolean lingered) {
+		this.lingered = lingered;
+	}
+
 	public boolean speedUp() {
 		if (speed < maxspeed) {
 			speed++;
@@ -59,5 +65,14 @@ public abstract class Vehicle {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean linger() {
+		lingered = true;
+		return slowDown();
+	}
+
+	public boolean hasLingered() {
+		return lingered;
 	}
 }

@@ -3,11 +3,14 @@
  */
 package edu.hm.am.stausimulator.model;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
+import edu.hm.am.stausimulator.chart.VDRChart;
 import edu.hm.am.stausimulator.data.LaneData;
 import edu.hm.am.stausimulator.factory.VehicleFactory;
 
@@ -27,12 +30,12 @@ public class Lane {
 		SOUTH
 	}
 
-	private static final Random random = new Random();
-
 	/** The direction. */
 	private final Direction direction;
 
 	private final Road road;
+
+	// private final int id;
 
 	/** The cells. */
 	private List<Cell> cells;
@@ -54,7 +57,7 @@ public class Lane {
 	public Lane(Road road, Direction direction) {
 		this.road = road;
 		this.direction = direction;
-		data = new LaneData(road.getCells());
+		data = new LaneData(this);
 		cells = new ArrayList<Cell>(road.getCells());
 		for (int i = 0; i < road.getCells(); i++) {
 			cells.add(new Cell());
@@ -65,7 +68,7 @@ public class Lane {
 		Cell cell;
 		for (Vehicle car : cars) {
 			while (true) {
-				cell = cells.get(random.nextInt(cells.size()));
+				cell = cells.get(Road.RANDOM.nextInt(cells.size()));
 				if (cell.isFree()) {
 					cell.setVehicle(car);
 					break;
@@ -91,6 +94,31 @@ public class Lane {
 		return data;
 	}
 
+	public int getMaxSpeed() {
+		return road.getMaxSpeed();
+	}
+
+	public int getCellsCount() {
+		return cells.size();
+	}
+
+	public void save(File directory) throws IOException {
+		// write CSV
+		File csv = new File(directory, "lane.csv");
+		FileWriter writer = new FileWriter(csv);
+
+		writer.append("Steps;" + road.getStep() + "\n");
+		writer.append("Cells;" + road.getCells() + "\n");
+
+		data.write(writer);
+
+		writer.flush();
+		writer.close();
+
+		// write VDR-Diagramm
+		VDRChart.write(data, new File(directory, "lane.png"));
+	}
+
 	public List<Integer> export() {
 		List<Integer> data = new ArrayList<>();
 		Integer value = null;
@@ -104,81 +132,23 @@ public class Lane {
 				value = null;
 			} else {
 				value = cell.getVehicle().getSpeed();
+				if (cell.getVehicle().hasLingered()) {
+					value *= -1;
+				}
 			}
 			data.add(value);
 		}
+
 		return data;
 	}
 
-	public void update() {
+	public void clear() {
 		data.add(export());
-
-		// update logic
-		int maxspeed = road.getMaxSpeed();
-		int distance = 0;
-
-		Cell cell;
-		Vehicle vehicle;
-		for (int i = 0; i < cells.size(); i++) {
-			cell = cells.get(i);
-
+		for (Cell cell : cells) {
 			if (!cell.isFree()) {
-				vehicle = cell.getVehicle();
-
-				distance = getDistance(i, cells);
-
-				// step 1 - speed up
-				if (vehicle.getSpeed() < maxspeed && distance > vehicle.getSpeed() + 1) {
-					vehicle.speedUp();
-				}
-
-				// step 2 - break
-				if (vehicle.getSpeed() > distance) {
-					vehicle.setSpeed(distance);
-				}
-
-				// step 3 - randomization
-				if (random.nextDouble() < road.getProbability()) {
-					vehicle.slowDown();
-				}
-
+				cell.getVehicle().setLingered(false);
 			}
 		}
-
-		// step 4 - move cars
-		int newpos;
-		List<Integer> flags = new ArrayList<Integer>();
-
-		for (int i = 0; i < cells.size(); i++) {
-			cell = cells.get(i);
-			if (!cell.isFree() && !flags.contains(i)) {
-				vehicle = cell.getVehicle();
-				newpos = i + cell.getVehicle().getSpeed();
-				newpos = newpos >= cells.size() ? newpos - cells.size() : newpos;
-
-				cell.setVehicle(null);
-				cells.get(newpos).setVehicle(vehicle);
-				flags.add(newpos);
-			}
-		}
-	}
-
-	private int getDistance(int index, List<Cell> cells) {
-		int distance = 0;
-
-		// start at next cell
-		index = (index + 1) % cells.size();
-		for (int i = index; i < cells.size(); i++) {
-			if (!cells.get(i).isFree()) {
-				break;
-			}
-			distance++;
-			if (i == cells.size() - 1) {
-				i = -1;
-			}
-		}
-
-		return distance;
 	}
 
 	@Override

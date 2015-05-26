@@ -3,6 +3,8 @@
  */
 package edu.hm.am.stausimulator;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -51,20 +53,18 @@ public class Simulator extends Observable {
 		return false;
 	}
 
-	public boolean addListener(Runnable runnable) {
-		return runner.addRunnable(runnable);
-	}
+	/*
+	 * public boolean addListener(Runnable runnable) { return
+	 * runner.addRunnable(runnable); }
+	 * 
+	 * public boolean removeListener(Runnable runnable) { return
+	 * runner.removeRunnable(runnable); }
+	 */
 
 	public void start() {
 		runner.start();
 		setChanged();
 		notifyObservers("Start");
-	}
-
-	public void pause() {
-		runner.pause();
-		setChanged();
-		notifyObservers("Pause");
 	}
 
 	public void stop() {
@@ -91,17 +91,29 @@ public class Simulator extends Observable {
 		notifyObservers("Step");
 	}
 
+	public void save(File directory) {
+		try {
+			for (Road road : roads) {
+				road.save(directory);
+			}
+		} catch (IOException e) {
+			// TODO remove
+			e.printStackTrace();
+		}
+	}
+
+	public void reset() {
+
+	}
+
 	private Simulator() {
-		runner = new Runner("Main Runner", 1000);
 		roads = new ArrayList<Road>();
 		roads.add(new Road(1));
-
-		addListener(new Runnable() {
+		runner = new Runner("Main Runner", Defaults.INTERVAL);
+		runner.addRunnable(new Runnable() {
 			@Override
 			public void run() {
-				for (Road road : roads) {
-					road.nextStep();
-				}
+				nextStep();
 			}
 		});
 	}

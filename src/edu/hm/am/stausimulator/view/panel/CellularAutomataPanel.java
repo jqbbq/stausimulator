@@ -3,6 +3,7 @@
  */
 package edu.hm.am.stausimulator.view.panel;
 
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,47 +33,47 @@ public class CellularAutomataPanel extends JPanel {
 
 	private List<Lane> lanes;
 
+	private JScrollPane scrollPane;
+	private ImagePanel image;
+
+	private Observer observer;
+
+	private Observer updater;
+
 	public CellularAutomataPanel(Road road) {
 		this.road = road;
 		setLayout(new MigLayout("insets 0", "[grow]", "[grow]"));
 
 		init();
 
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setPreferredSize(this.getSize());
-		ImagePanel image = new ImagePanel();
+		image = new ImagePanel();
 
+		scrollPane = new JScrollPane();
+		scrollPane.setPreferredSize(this.getSize());
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
 		scrollPane.setViewportView(image);
 
 		add(scrollPane, "cell 0 0,grow");
 
-		road.addObserver(new Observer() {
+		observer = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
 				init();
 				image.repaint();
-
-				scrollPane.setPreferredSize(getSize());
 				scrollPane.revalidate();
 			}
-		});
+		};
 
-		Simulator.getInstance().addListener(new Runnable() {
-			@Override
-			public void run() {
-				image.repaint();
-			}
-		});
-
-		Simulator.getInstance().addObserver(new Observer() {
+		updater = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
 				image.repaint();
 			}
-		});
+		};
+
+		road.addObserver(observer);
+		Simulator.getInstance().addObserver(updater);
 
 		setVisible(true);
 	}
@@ -82,10 +83,19 @@ public class CellularAutomataPanel extends JPanel {
 
 		int laneY = 5;
 
+		Lane l;
 		for (edu.hm.am.stausimulator.model.Lane lane : road.getLanes()) {
-			lanes.add(new Lane(5, laneY, lane.getCells()));
-			laneY += Lane.LANE_HEIGHT + 5;
+			l = new Lane(5, laneY, lane.getCells());
+			lanes.add(l);
+			laneY += l.getHeight() + 5;
 		}
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		road.deleteObserver(observer);
+		Simulator.getInstance().deleteObserver(updater);
 	}
 
 	private class ImagePanel extends JPanel {
@@ -95,6 +105,13 @@ public class CellularAutomataPanel extends JPanel {
 		@Override
 		public void paint(Graphics g) {
 			super.paint(g);
+
+			Dimension size = new Dimension(lanes.get(0).getWidth() + 10, lanes.get(0).getHeight() * lanes.size() + 10);
+			setSize(size);
+			setPreferredSize(size);
+			setMinimumSize(size);
+			setMaximumSize(size);
+
 			for (Lane lane : lanes) {
 				lane.draw(g);
 			}

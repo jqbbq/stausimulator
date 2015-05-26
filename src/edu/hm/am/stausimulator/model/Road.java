@@ -3,15 +3,22 @@
  */
 package edu.hm.am.stausimulator.model;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
+import java.util.Random;
+
+import edu.hm.am.stausimulator.Defaults;
 
 // TODO: Auto-generated Javadoc
 /**
  * The Class Road.
  */
 public class Road extends Observable {
+
+	public static final Random RANDOM = new Random();
 
 	private final int id;
 
@@ -42,12 +49,12 @@ public class Road extends Observable {
 
 		step = 0;
 
-		laneCount = 1;
-		cells = 20;
-		maxSpeed = 5;
-		density = 0.2;
-		probability = 0.2;
-		startingProbability = 0.2;
+		laneCount = Defaults.LANES;
+		cells = Defaults.CELLS;
+		maxSpeed = Defaults.MAXSPEED;
+		density = Defaults.DENSITY;
+		probability = Defaults.PROBABILITY;
+		startingProbability = Defaults.STARTING_PROBABILITY;
 
 		init();
 	}
@@ -64,7 +71,7 @@ public class Road extends Observable {
 		laneCount = lanes;
 		init();
 		setChanged();
-		notifyObservers();
+		notifyObservers("Changed Lanes");
 	}
 
 	public int getStep() {
@@ -79,7 +86,7 @@ public class Road extends Observable {
 		this.cells = cells;
 		init();
 		setChanged();
-		notifyObservers();
+		notifyObservers("Changed Cells");
 	}
 
 	public int getMaxSpeed() {
@@ -88,6 +95,7 @@ public class Road extends Observable {
 
 	public void setMaxSpeed(int maxSpeed) {
 		this.maxSpeed = maxSpeed;
+		notifyObservers("Changed Max Speed");
 	}
 
 	public double getDensity() {
@@ -98,7 +106,7 @@ public class Road extends Observable {
 		this.density = density;
 		init();
 		setChanged();
-		notifyObservers();
+		notifyObservers("Changed Density");
 	}
 
 	public double getProbability() {
@@ -107,6 +115,7 @@ public class Road extends Observable {
 
 	public void setProbability(double probability) {
 		this.probability = probability;
+		notifyObservers("Changed Probability");
 	}
 
 	public double getStartingProbability() {
@@ -115,14 +124,112 @@ public class Road extends Observable {
 
 	public void setStartingProbability(double startingProbability) {
 		this.startingProbability = startingProbability;
+		notifyObservers("Changed Starting Probability");
 	}
 
 	public int nextStep() {
-		for (Lane lane : lanes) {
-			lane.update();
+
+		List<Cell> cells;
+
+		Lane lane;
+		Cell cell;
+		Vehicle vehicle;
+
+		int laneCount = lanes.size();
+		int cellCount = lanes.get(0).getCellsCount();
+		int distance;
+
+		// clear
+		for (int l = 0; l < laneCount; l++) {
+			lanes.get(l).clear();
 		}
+
+		// step one
+		for (int l = 0; l < laneCount; l++) {
+			lane = lanes.get(l);
+			cells = lane.getCells();
+
+			for (int c = 0; c < cellCount; c++) {
+				cell = cells.get(c);
+
+				vehicle = cell.getVehicle();
+				if (vehicle != null) {
+					vehicle.speedUp();
+				}
+			}
+		}
+
+		// step two
+		for (int l = 0; l < laneCount; l++) {
+			lane = lanes.get(l);
+			cells = lane.getCells();
+
+			for (int c = 0; c < cellCount; c++) {
+				cell = cells.get(c);
+
+				vehicle = cell.getVehicle();
+				if (vehicle != null) {
+					distance = getDistance(c, cells);
+					if (vehicle.getSpeed() > distance) {
+						vehicle.setSpeed(distance);
+					}
+				}
+			}
+		}
+
+		// step 3 - randomization (linger)
+		for (int l = 0; l < laneCount; l++) {
+			lane = lanes.get(l);
+			cells = lane.getCells();
+
+			for (int c = 0; c < cellCount; c++) {
+				cell = cells.get(c);
+
+				vehicle = cell.getVehicle();
+				if (vehicle != null) {
+					distance = getDistance(c, cells);
+					if (RANDOM.nextDouble() < (vehicle.getSpeed() == 1 ? getStartingProbability() : getProbability())) {
+						vehicle.linger();
+					}
+				}
+			}
+		}
+
+		// step 4 - move cars
+		int newpos;
+		List<Integer> flags = new ArrayList<Integer>();
+
+		for (int l = 0; l < laneCount; l++) {
+			lane = lanes.get(l);
+			cells = lane.getCells();
+
+			for (int c = 0; c < cellCount; c++) {
+				cell = cells.get(c);
+
+				if (!cell.isFree() && !flags.contains(c)) {
+					vehicle = cell.getVehicle();
+					newpos = c + cell.getVehicle().getSpeed();
+					newpos = newpos >= cells.size() ? newpos - cells.size() : newpos;
+
+					cell.setVehicle(null);
+					cells.get(newpos).setVehicle(vehicle);
+					flags.add(newpos);
+				}
+			}
+		}
+
 		step++;
+		notifyObservers("Step");
 		return step;
+	}
+
+	public void save(File directory) throws IOException {
+		File dir = new File(directory, "Road " + id);
+		dir.mkdir();
+
+		for (Lane lane : lanes) {
+			lane.save(dir);
+		}
 	}
 
 	private void init() {
@@ -130,6 +237,24 @@ public class Road extends Observable {
 		for (int i = 0; i < laneCount; i++) {
 			lanes.add(new Lane(this));
 		}
+	}
+
+	private int getDistance(int index, List<Cell> cells) {
+		int distance = 0;
+
+		// start at next cell
+		index = (index + 1) % cells.size();
+		for (int i = index; i < cells.size(); i++) {
+			if (!cells.get(i).isFree()) {
+				break;
+			}
+			distance++;
+			if (i == cells.size() - 1) {
+				i = -1;
+			}
+		}
+
+		return distance;
 	}
 
 	@Override

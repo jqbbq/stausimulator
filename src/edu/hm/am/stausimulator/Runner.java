@@ -5,19 +5,20 @@ import java.util.List;
 
 public class Runner implements Runnable {
 
-	private Thread thread;
-
-	private boolean paused;
 	private int interval;
+	private boolean running;
 
+	private String name;
+
+	private Thread thread;
 	private List<Runnable> runnables;
 
 	public Runner(String name, int interval) {
+		this.name = name;
 		this.interval = interval;
-		paused = true;
+
+		running = false;
 		runnables = new ArrayList<Runnable>();
-		thread = new Thread(this, name);
-		thread.start();
 	}
 
 	public boolean addRunnable(Runnable runnable) {
@@ -25,28 +26,18 @@ public class Runner implements Runnable {
 		return true;
 	}
 
-	public boolean start() {
-		if (!paused) {
-			return false;
-		}
-		paused = false;
-		return true;
+	public boolean removeRunnable(Runnable runnable) {
+		return runnables.remove(runnable);
 	}
 
-	public boolean pause() {
-		if (paused) {
-			return false;
-		}
-
-		paused = true;
-		return true;
+	public void start() {
+		running = true;
+		thread = new Thread(this, name);
+		thread.start();
 	}
 
-	public boolean stop() {
-		paused = true;
-		thread.interrupt();
-		thread = null;
-		return true;
+	public void stop() {
+		running = false;
 	}
 
 	public void setInterval(int interval) {
@@ -58,17 +49,15 @@ public class Runner implements Runnable {
 	}
 
 	public boolean isRunning() {
-		return thread != null && !paused;
+		return running;
 	}
 
 	@Override
 	public void run() {
 		try {
-			while (true) {
-				if (!paused) {
-					for (Runnable runnable : runnables) {
-						runnable.run();
-					}
+			while (running) {
+				for (Runnable runnable : runnables) {
+					runnable.run();
 				}
 				Thread.sleep(interval);
 			}
@@ -76,4 +65,5 @@ public class Runner implements Runnable {
 			e.printStackTrace();
 		}
 	}
+
 }

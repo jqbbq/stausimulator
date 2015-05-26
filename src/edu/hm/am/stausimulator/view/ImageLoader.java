@@ -28,13 +28,15 @@ public class ImageLoader {
 		// preload Images
 		load("car.png");
 		load("car2.png");
+		load("step.png");
+		load("play.png");
+		load("stop.png");
 
-		put("car.png",
-				Scalr.resize((BufferedImage) get("car.png"), (int) Math.floor(Cell.CELL_WIDTH * 0.8),
-						(int) Math.floor(Cell.CELL_HEIGHT * 0.8)));
-		put("car2.png",
-				Scalr.resize((BufferedImage) get("car2.png"), (int) Math.floor(Cell.CELL_WIDTH * 0.8),
-						(int) Math.floor(Cell.CELL_HEIGHT * 0.8)));
+		put("car.png", Scalr.resize((BufferedImage) get("car.png"), (int) Math.floor(Cell.CELL_WIDTH * 0.8), (int) Math.floor(Cell.CELL_HEIGHT * 0.8)));
+		put("car2.png", Scalr.resize((BufferedImage) get("car2.png"), (int) Math.floor(Cell.CELL_WIDTH * 0.8), (int) Math.floor(Cell.CELL_HEIGHT * 0.8)));
+		put("step.png", Scalr.resize((BufferedImage) get("step.png"), 20, 20));
+		put("play.png", Scalr.resize((BufferedImage) get("play.png"), 20, 20));
+		put("stop.png", Scalr.resize((BufferedImage) get("stop.png"), 20, 20));
 	}
 
 	public static boolean load(String name) {

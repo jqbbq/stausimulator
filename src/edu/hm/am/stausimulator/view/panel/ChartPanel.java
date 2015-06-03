@@ -15,13 +15,10 @@ public class ChartPanel extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = -4249332653340429468L;
 
-	private RoadData data;
-
 	private JComboBox<Integer> laneSelectbox;
 	private JComboBox<Integer> chartSelectbox;
 
 	public ChartPanel(RoadData data) {
-		this.data = data;
 
 		setLayout(new MigLayout("gap 0", "[grow]", "[50px,fill][grow]"));
 		setBackground(Color.WHITE);

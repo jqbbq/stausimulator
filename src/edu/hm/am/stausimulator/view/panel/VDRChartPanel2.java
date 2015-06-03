@@ -13,11 +13,11 @@ import javax.swing.ScrollPaneConstants;
 
 import net.miginfocom.swing.MigLayout;
 import edu.hm.am.stausimulator.Simulator;
-import edu.hm.am.stausimulator.chart.VDRChart;
+import edu.hm.am.stausimulator.chart.VDRChart2;
 import edu.hm.am.stausimulator.data.LaneData;
 import edu.hm.am.stausimulator.model.Lane;
 
-public class VDRChartPanel extends JPanel {
+public class VDRChartPanel2 extends JPanel {
 
 	private static final long serialVersionUID = -2497484297331437275L;
 
@@ -27,7 +27,7 @@ public class VDRChartPanel extends JPanel {
 
 	private JScrollPane scrollPane;
 
-	public VDRChartPanel(Lane lane) {
+	public VDRChartPanel2(Lane lane) {
 
 		data = lane.getData();
 
@@ -43,14 +43,6 @@ public class VDRChartPanel extends JPanel {
 		scrollPane.setViewportView(new ImagePanel());
 
 		add(scrollPane, "cell 0 0,grow");
-
-		/*
-		 * runner = new Runner("Line Chart", 500); runner.addRunnable(new
-		 * Runnable() {
-		 * 
-		 * @Override public void run() { image.repaint();
-		 * scrollPane.revalidate(); } });
-		 */
 
 		observer = new Observer() {
 			@Override
@@ -84,7 +76,7 @@ public class VDRChartPanel extends JPanel {
 		public void paint(Graphics g) {
 			super.paint(g);
 
-			BufferedImage image = VDRChart.draw(data, (int) scrollPane.getVisibleRect().getHeight(), false, false);
+			BufferedImage image = VDRChart2.draw(data, (int) scrollPane.getVisibleRect().getHeight(), false, false);
 			Dimension dimension = new Dimension(image.getWidth(), image.getHeight());
 
 			g.drawImage(image, 0, 0, null);

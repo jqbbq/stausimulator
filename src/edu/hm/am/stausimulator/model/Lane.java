@@ -7,18 +7,25 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 
+import edu.hm.am.stausimulator.Defaults;
 import edu.hm.am.stausimulator.chart.VDRChart;
+import edu.hm.am.stausimulator.chart.VDRChart2;
 import edu.hm.am.stausimulator.data.LaneData;
+import edu.hm.am.stausimulator.data.RoundData;
 import edu.hm.am.stausimulator.factory.VehicleFactory;
 
 // TODO: Auto-generated Javadoc
 /**
  * The Class Lane.
  */
-public class Lane {
+public class Lane extends Observable {
 
 	/**
 	 * The Enum Direction.
@@ -33,12 +40,17 @@ public class Lane {
 	/** The direction. */
 	private final Direction direction;
 
-	private final Road road;
+	private double lingerProbability;
 
-	// private final int id;
+	private double startingProbability;
 
 	/** The cells. */
 	private List<Cell> cells;
+
+	private Road road;
+
+	private Lane next;
+	private Lane prev;
 
 	private LaneData data;
 
@@ -57,24 +69,38 @@ public class Lane {
 	public Lane(Road road, Direction direction) {
 		this.road = road;
 		this.direction = direction;
+
+		next = this;
+		prev = this;
 		data = new LaneData(this);
-		cells = new ArrayList<Cell>(road.getCells());
-		for (int i = 0; i < road.getCells(); i++) {
-			cells.add(new Cell());
-		}
 
-		List<Vehicle> cars = VehicleFactory.createVehicles((int) (road.getDensity() * road.getCells()), road.getMaxSpeed());
+		lingerProbability = Defaults.LINGER_PROBABILITY;
+		startingProbability = Defaults.STARTING_PROBABILITY;
 
-		Cell cell;
-		for (Vehicle car : cars) {
-			while (true) {
-				cell = cells.get(Road.RANDOM.nextInt(cells.size()));
-				if (cell.isFree()) {
-					cell.setVehicle(car);
-					break;
+		initCells();
+		initVehicles();
+
+		data.add(new RoundData(export()));
+
+		road.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				if ("Changed Density".equals(arg) || "Changed Max Speed".equals(arg)) {
+					initVehicles();
+				} else if ("Changed Cells".equals(arg)) {
+					initCells();
+					initVehicles();
 				}
 			}
-		}
+		});
+	}
+
+	public Road getRoad() {
+		return road;
+	}
+
+	public void setRoad(Road road) {
+		this.road = road;
 	}
 
 	/**
@@ -86,6 +112,32 @@ public class Lane {
 		return direction;
 	}
 
+	public Lane getPrev() {
+		return prev;
+	}
+
+	public void setPrev(Lane prev) {
+		this.prev = prev;
+
+		setChanged();
+		notifyObservers("Changed previous lane");
+	}
+
+	public Lane getNext() {
+		return next;
+	}
+
+	public void setNext(Lane next) {
+		this.next = next;
+
+		setChanged();
+		notifyObservers("Changed previous lane");
+	}
+
+	public Cell getCell(int index) {
+		return cells.get(index);
+	}
+
 	public List<Cell> getCells() {
 		return cells;
 	}
@@ -94,21 +146,48 @@ public class Lane {
 		return data;
 	}
 
-	public int getMaxSpeed() {
-		return road.getMaxSpeed();
+	public int getMaxVelocity() {
+		return road.getMaxVelocity();
 	}
 
-	public int getCellsCount() {
+	public int getNumberOfCells() {
 		return cells.size();
+	}
+
+	public double getLingerProbability() {
+		return lingerProbability;
+	}
+
+	public void setLingerProbability(double probability) {
+		Map<String, Object> changeData = new HashMap<>();
+		changeData.put("from", new Double(lingerProbability));
+		changeData.put("to", new Double(probability));
+		data.addChange(new Integer(road.getStep()), "probability", changeData);
+
+		lingerProbability = probability;
+
+		notifyObservers("Changed Probability");
+	}
+
+	public double getStartingProbability() {
+		return startingProbability;
+	}
+
+	public void setStartingProbability(double probability) {
+		Map<String, Object> changeData = new HashMap<>();
+		changeData.put("from", new Double(startingProbability));
+		changeData.put("to", new Double(probability));
+		data.addChange(new Integer(road.getStep()), "startingProbability", changeData);
+
+		startingProbability = probability;
+
+		notifyObservers("Changed Starting Probability");
 	}
 
 	public void save(File directory) throws IOException {
 		// write CSV
-		File csv = new File(directory, "lane.csv");
+		File csv = new File(directory, "data.csv");
 		FileWriter writer = new FileWriter(csv);
-
-		writer.append("Steps;" + road.getStep() + "\n");
-		writer.append("Cells;" + road.getCells() + "\n");
 
 		data.write(writer);
 
@@ -116,7 +195,8 @@ public class Lane {
 		writer.close();
 
 		// write VDR-Diagramm
-		VDRChart.write(data, new File(directory, "lane.png"));
+		VDRChart.write(data, new File(directory, "vdr-chart-color.png"));
+		VDRChart2.write(data, new File(directory, "vdr-chart-black&white.png"));
 	}
 
 	public List<Integer> export() {
@@ -128,9 +208,8 @@ public class Lane {
 
 		while (it.hasNext()) {
 			cell = it.next();
-			if (cell.isFree()) {
-				value = null;
-			} else {
+			value = null;
+			if (!cell.isFree()) {
 				value = cell.getVehicle().getSpeed();
 				if (cell.getVehicle().hasLingered()) {
 					value *= -1;
@@ -143,26 +222,47 @@ public class Lane {
 	}
 
 	public void clear() {
-		data.add(export());
 		for (Cell cell : cells) {
 			if (!cell.isFree()) {
 				cell.getVehicle().setLingered(false);
+				cell.getVehicle().setChangedLane(false);
 			}
 		}
 	}
 
+	public void addData(RoundData data) {
+		this.data.add(data);
+	}
+
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
+		return super.toString();
+	}
 
-		for (Cell cell : cells) {
-			if (cell.isFree()) {
-				sb.append("-");
-			} else {
-				sb.append(cell.getVehicle().getSpeed());
-			}
+	private void initCells() {
+		cells = new ArrayList<Cell>();
+		for (int i = 0; i < road.getNumberOfCells(); i++) {
+			cells.add(new Cell());
+		}
+	}
+
+	private void initVehicles() {
+		// remove all cars
+		for (int i = 0; i < cells.size(); i++) {
+			cells.get(i).setVehicle(null);
 		}
 
-		return sb.toString();
+		// init vehicles
+		Cell cell;
+		List<Vehicle> vehicles = VehicleFactory.createCars((int) (road.getDensity() * road.getNumberOfCells()), road.getMaxVelocity());
+		for (Vehicle vehicle : vehicles) {
+			while (true) {
+				cell = cells.get(Road.RANDOM.nextInt(cells.size()));
+				if (cell.isFree()) {
+					cell.setVehicle(vehicle);
+					break;
+				}
+			}
+		}
 	}
 }

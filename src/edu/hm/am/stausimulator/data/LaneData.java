@@ -3,22 +3,34 @@ package edu.hm.am.stausimulator.data;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import edu.hm.am.stausimulator.model.Lane;
 
 public class LaneData {
 
 	private Lane lane;
-	private List<List<Integer>> data;
+	private List<RoundData> data;
+	private Map<Integer, Map<String, Map<String, Object>>> changes;
 
 	public LaneData(Lane lane) {
 		this.lane = lane;
-		data = new ArrayList<List<Integer>>();
+		data = new ArrayList<>();
+		changes = new HashMap<>();
 	}
 
-	public boolean add(List<Integer> Step) {
-		return data.add(Step);
+	public void add(RoundData data) {
+		this.data.add(data);
+	}
+
+	public void addChange(Integer step, String changeName, Map<String, Object> changeData) {
+		if (!changes.containsKey(step)) {
+			changes.put(step, new HashMap<String, Map<String, Object>>());
+		}
+		Map<String, Map<String, Object>> change = changes.get(step);
+		change.put(changeName, changeData);
 	}
 
 	public int getHeight() {
@@ -26,46 +38,54 @@ public class LaneData {
 	}
 
 	public int getWidth() {
-		return lane.getCellsCount();
+		return lane.getNumberOfCells();
 	}
 
 	public int getMax() {
-		return lane.getMaxSpeed();
+		return lane.getMaxVelocity();
 	}
 
 	public int getSize() {
 		return data.size();
 	}
 
-	public List<List<Integer>> getAll() {
+	public List<RoundData> getAll() {
 		return data;
 	}
 
-	public List<List<Integer>> getLast(int size) {
+	public List<RoundData> getLast(int size) {
 		if (data.size() < size) {
 			size = data.size();
 		}
-		List<List<Integer>> list = new ArrayList<>();
+		List<RoundData> list = new ArrayList<>();
 		for (int i = data.size() - size; i < data.size(); i++) {
-			list.add(new ArrayList<>(data.get(i)));
+			list.add(data.get(i).clone());
 		}
 		return list;
 	}
 
 	public void write(FileWriter writer) throws IOException {
-		List<Integer> step;
+		RoundData data;
+		List<Integer> velocities;
+
 		Integer cell;
 
-		for (int r = 0; r < data.size(); r++) {
-			step = data.get(r);
+		for (int r = 0; r < this.data.size(); r++) {
+			// add row seperator
 			if (r > 0) {
 				writer.append("\n");
 			}
-			for (int c = 0; c < step.size(); c++) {
-				cell = step.get(c);
-				if (c > 0) {
-					writer.append(";");
-				}
+			data = this.data.get(r);
+			velocities = data.getVelocityPerCell();
+
+			// writer.append(data.getFlow() + "");
+			for (int c = 0; c < velocities.size(); c++) {
+				cell = velocities.get(c);
+
+				// add column seperator
+				writer.append(";");
+
+				// add cell value
 				writer.append(cell == null ? "-" : cell + "");
 			}
 		}

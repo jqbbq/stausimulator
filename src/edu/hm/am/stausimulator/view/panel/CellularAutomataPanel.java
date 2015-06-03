@@ -3,6 +3,7 @@
  */
 package edu.hm.am.stausimulator.view.panel;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -36,13 +37,14 @@ public class CellularAutomataPanel extends JPanel {
 	private JScrollPane scrollPane;
 	private ImagePanel image;
 
-	private Observer observer;
+	private Observer roadObserver;
 
-	private Observer updater;
+	private Observer simulatorObserver;
 
 	public CellularAutomataPanel(Road road) {
 		this.road = road;
-		setLayout(new MigLayout("insets 0", "[grow]", "[grow]"));
+		setLayout(new MigLayout("insets 5", "[grow]", "[grow]"));
+		setBackground(Color.WHITE);
 
 		init();
 
@@ -56,7 +58,7 @@ public class CellularAutomataPanel extends JPanel {
 
 		add(scrollPane, "cell 0 0,grow");
 
-		observer = new Observer() {
+		roadObserver = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
 				init();
@@ -65,17 +67,16 @@ public class CellularAutomataPanel extends JPanel {
 			}
 		};
 
-		updater = new Observer() {
+		simulatorObserver = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
 				image.repaint();
 			}
 		};
 
-		road.addObserver(observer);
-		Simulator.getInstance().addObserver(updater);
+		road.addObserver(roadObserver);
+		Simulator.getInstance().addObserver(simulatorObserver);
 
-		setVisible(true);
 	}
 
 	public void init() {
@@ -94,8 +95,8 @@ public class CellularAutomataPanel extends JPanel {
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
-		road.deleteObserver(observer);
-		Simulator.getInstance().deleteObserver(updater);
+		road.deleteObserver(roadObserver);
+		Simulator.getInstance().deleteObserver(simulatorObserver);
 	}
 
 	private class ImagePanel extends JPanel {
@@ -106,14 +107,16 @@ public class CellularAutomataPanel extends JPanel {
 		public void paint(Graphics g) {
 			super.paint(g);
 
-			Dimension size = new Dimension(lanes.get(0).getWidth() + 10, lanes.get(0).getHeight() * lanes.size() + 10);
-			setSize(size);
-			setPreferredSize(size);
-			setMinimumSize(size);
-			setMaximumSize(size);
+			if (lanes.size() > 0) {
+				Dimension size = new Dimension(lanes.get(0).getWidth() + 10, lanes.get(0).getHeight() * lanes.size() + 10);
+				setSize(size);
+				setPreferredSize(size);
+				setMinimumSize(size);
+				setMaximumSize(size);
 
-			for (Lane lane : lanes) {
-				lane.draw(g);
+				for (int l = 0; l < lanes.size(); l++) {
+					lanes.get(l).draw(g);
+				}
 			}
 		}
 	}

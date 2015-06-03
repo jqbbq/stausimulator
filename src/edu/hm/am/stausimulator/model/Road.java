@@ -11,6 +11,7 @@ import java.util.Observable;
 import java.util.Random;
 
 import edu.hm.am.stausimulator.Defaults;
+import edu.hm.am.stausimulator.data.RoundData;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -20,47 +21,47 @@ public class Road extends Observable {
 
 	public static final Random RANDOM = new Random();
 
-	private final int id;
-
-	/** The lanes. */
-	private List<Lane> lanes;
-
-	private int laneCount;
+	private int numberOfLanes;
 
 	private int step;
 
-	private int cells;
+	private int numberOfCells;
 
-	private int maxSpeed;
+	private int maxVelocity;
 
 	private double density;
 
-	private double probability;
+	private boolean cruiseControl; // TODO: implement in logic
 
-	private double startingProbability;
+	private boolean allowLaneChange;
+
+	private List<Lane> lanes;
 
 	/**
 	 * Instantiates a new road.
 	 *
 	 * @param lanes the lanes
 	 */
-	public Road(int id) {
-		this.id = id;
-
+	public Road() {
 		step = 0;
-
-		laneCount = Defaults.LANES;
-		cells = Defaults.CELLS;
-		maxSpeed = Defaults.MAXSPEED;
+		numberOfLanes = Defaults.NUMBER_OF_LANES;
+		numberOfCells = Defaults.NUMBER_OF_CELLS;
+		maxVelocity = Defaults.MAX_VELOCITY;
 		density = Defaults.DENSITY;
-		probability = Defaults.PROBABILITY;
-		startingProbability = Defaults.STARTING_PROBABILITY;
 
 		init();
 	}
 
-	public int getId() {
-		return id;
+	public int getStep() {
+		return step;
+	}
+
+	public int getNumberOfCells() {
+		return numberOfCells;
+	}
+
+	public int getNumberOfLanes() {
+		return numberOfLanes;
 	}
 
 	public List<Lane> getLanes() {
@@ -68,34 +69,26 @@ public class Road extends Observable {
 	}
 
 	public void setLanes(int lanes) {
-		laneCount = lanes;
+		numberOfLanes = lanes;
 		init();
 		setChanged();
 		notifyObservers("Changed Lanes");
 	}
 
-	public int getStep() {
-		return step;
-	}
-
-	public int getCells() {
-		return cells;
-	}
-
 	public void setCells(int cells) {
-		this.cells = cells;
-		init();
+		numberOfCells = cells;
 		setChanged();
 		notifyObservers("Changed Cells");
 	}
 
-	public int getMaxSpeed() {
-		return maxSpeed;
+	public int getMaxVelocity() {
+		return maxVelocity;
 	}
 
-	public void setMaxSpeed(int maxSpeed) {
-		this.maxSpeed = maxSpeed;
-		notifyObservers("Changed Max Speed");
+	public void setMaxVelocity(int maxVelocity) {
+		this.maxVelocity = maxVelocity;
+		setChanged();
+		notifyObservers("Changed Max Velocity");
 	}
 
 	public double getDensity() {
@@ -104,47 +97,60 @@ public class Road extends Observable {
 
 	public void setDensity(double density) {
 		this.density = density;
-		init();
 		setChanged();
 		notifyObservers("Changed Density");
 	}
 
-	public double getProbability() {
-		return probability;
+	public boolean isAllowLaneChange() {
+		return allowLaneChange;
 	}
 
-	public void setProbability(double probability) {
-		this.probability = probability;
-		notifyObservers("Changed Probability");
+	public void setAllowLaneChange(boolean allowChange) {
+		allowLaneChange = allowChange;
+		if (allowLaneChange) {
+			// link each road to itself
+			for (Lane lane : lanes) {
+				lane.setPrev(lane);
+				lane.setNext(lane);
+			}
+		}
+		setChanged();
+		notifyObservers("Changed Allow Lane Change");
 	}
 
-	public double getStartingProbability() {
-		return startingProbability;
+	public boolean isCruiseControl() {
+		return cruiseControl;
 	}
 
-	public void setStartingProbability(double startingProbability) {
-		this.startingProbability = startingProbability;
-		notifyObservers("Changed Starting Probability");
+	public void setCruiseControl(boolean cruiseControl) {
+		this.cruiseControl = cruiseControl;
+		// TODO: implement logic
 	}
 
 	public int nextStep() {
 
 		List<Cell> cells;
+		List<RoundData> data = new ArrayList<>();
 
 		Lane lane;
 		Cell cell;
 		Vehicle vehicle;
 
 		int laneCount = lanes.size();
-		int cellCount = lanes.get(0).getCellsCount();
+		int cellCount = lanes.get(0).getNumberOfCells();
 		int distance;
 
 		// clear
 		for (int l = 0; l < laneCount; l++) {
+			data.add(new RoundData());
 			lanes.get(l).clear();
 		}
 
-		// step one
+		// stage zero
+		setChanged();
+		notifyObservers("Stage 0 - Done");
+
+		// stage one - speed up
 		for (int l = 0; l < laneCount; l++) {
 			lane = lanes.get(l);
 			cells = lane.getCells();
@@ -158,8 +164,58 @@ public class Road extends Observable {
 				}
 			}
 		}
+		setChanged();
+		notifyObservers("Stage 1 - Done");
 
-		// step two
+		if (allowLaneChange) {
+			int distanceLeftLane;
+			int distanceRightLane;
+
+			Lane leftLane;
+			Lane rightLane;
+
+			for (int l = 0; l < laneCount; l++) {
+				lane = lanes.get(l);
+				cells = lane.getCells();
+
+				for (int c = 0; c < cellCount; c++) {
+					cell = cells.get(c);
+
+					vehicle = cell.getVehicle();
+					if (vehicle != null) {
+						distance = getForwardDistance(lane, c);
+
+						if (vehicle.getSpeed() > distance) {
+							distanceLeftLane = l > 0 ? getForwardDistance(lanes.get(l - 1), c) : -1;
+							if (distanceLeftLane > 0 && distanceLeftLane > distance) {
+								leftLane = lanes.get(l - 1);
+								if (leftLane.getCells().get(c).isFree() && canChangeTo(leftLane, c)) {
+									vehicle.setChangedLane();
+									cell.setVehicle(null);
+									leftLane.getCells().get(c).setVehicle(vehicle);
+									continue;
+								}
+							}
+
+							distanceRightLane = (l + 1) < lanes.size() ? getForwardDistance(lanes.get(l + 1), c) : -1;
+							if (distanceRightLane > 0 && distanceRightLane > distance) {
+								rightLane = lanes.get(l + 1);
+								if (rightLane.getCells().get(c).isFree() && canChangeTo(rightLane, c)) {
+									vehicle.setChangedLane();
+									cell.setVehicle(null);
+									rightLane.getCells().get(c).setVehicle(vehicle);
+									continue;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		setChanged();
+		notifyObservers("Stage 1.5 - Lane Change");
+
+		// stage 2 - brake
 		for (int l = 0; l < laneCount; l++) {
 			lane = lanes.get(l);
 			cells = lane.getCells();
@@ -169,15 +225,17 @@ public class Road extends Observable {
 
 				vehicle = cell.getVehicle();
 				if (vehicle != null) {
-					distance = getDistance(c, cells);
+					distance = getForwardDistance(lane, c);
 					if (vehicle.getSpeed() > distance) {
 						vehicle.setSpeed(distance);
 					}
 				}
 			}
 		}
+		setChanged();
+		notifyObservers("Stage 2 - Done");
 
-		// step 3 - randomization (linger)
+		// stage 3 - randomization (linger)
 		for (int l = 0; l < laneCount; l++) {
 			lane = lanes.get(l);
 			cells = lane.getCells();
@@ -187,79 +245,160 @@ public class Road extends Observable {
 
 				vehicle = cell.getVehicle();
 				if (vehicle != null) {
-					distance = getDistance(c, cells);
-					if (RANDOM.nextDouble() < (vehicle.getSpeed() == 1 ? getStartingProbability() : getProbability())) {
+					distance = getForwardDistance(lane, c);
+					if (RANDOM.nextDouble() < (vehicle.getSpeed() == 1 ? lane.getStartingProbability() : lane.getLingerProbability())) {
 						vehicle.linger();
 					}
 				}
 			}
 		}
+		setChanged();
+		notifyObservers("Stage 3 - Done");
 
-		// step 4 - move cars
+		// stage 4 - move cars
+		List<String> flags = new ArrayList<String>();
+		RoundData stepData;
+
 		int newpos;
-		List<Integer> flags = new ArrayList<Integer>();
+		int averageFlow;
 
 		for (int l = 0; l < laneCount; l++) {
 			lane = lanes.get(l);
 			cells = lane.getCells();
 
+			averageFlow = 0;
+
 			for (int c = 0; c < cellCount; c++) {
 				cell = cells.get(c);
 
-				if (!cell.isFree() && !flags.contains(c)) {
+				if (!cell.isFree() && cell.getVehicle().getSpeed() > 0 && !flags.contains(l + "|" + c)) {
 					vehicle = cell.getVehicle();
-					newpos = c + cell.getVehicle().getSpeed();
-					newpos = newpos >= cells.size() ? newpos - cells.size() : newpos;
+					newpos = c + vehicle.getSpeed();
 
 					cell.setVehicle(null);
-					cells.get(newpos).setVehicle(vehicle);
-					flags.add(newpos);
+					if (newpos < cellCount) {
+						cells.get(newpos).setVehicle(vehicle);
+						flags.add(l + "|" + newpos);
+					} else {
+						if (lane.getNext() != null) {
+							newpos = newpos - cells.size();
+							lane.getNext().getCells().get(newpos).setVehicle(vehicle);
+							flags.add(lanes.indexOf(lane.getNext()) + "|" + newpos);
+						}
+
+					}
+					averageFlow++;
 				}
 			}
+
+			stepData = data.get(l);
+			stepData.setVelocityPerCell(lane.export());
+			stepData.setAverageFlow(averageFlow);
+
+			lane.addData(stepData);
 		}
+		setChanged();
+		notifyObservers("Stage 4 - Done");
 
 		step++;
+		setChanged();
 		notifyObservers("Step");
+
 		return step;
 	}
 
 	public void save(File directory) throws IOException {
-		File dir = new File(directory, "Road " + id);
-		dir.mkdir();
-
-		for (Lane lane : lanes) {
+		Lane lane;
+		File dir;
+		for (int i = 0; i < lanes.size(); i++) {
+			lane = lanes.get(i);
+			dir = new File(directory, "Lane " + (i + 1));
+			dir.mkdir();
 			lane.save(dir);
 		}
 	}
 
+	public void reset() {
+		step = 0;
+		numberOfLanes = Defaults.NUMBER_OF_LANES;
+		numberOfCells = Defaults.NUMBER_OF_CELLS;
+		maxVelocity = Defaults.MAX_VELOCITY;
+		density = Defaults.DENSITY;
+
+		init();
+		setChanged();
+		notifyObservers("Reset");
+	}
+
 	private void init() {
 		lanes = new ArrayList<Lane>();
-		for (int i = 0; i < laneCount; i++) {
+		for (int i = 0; i < numberOfLanes; i++) {
 			lanes.add(new Lane(this));
 		}
 	}
 
-	private int getDistance(int index, List<Cell> cells) {
-		int distance = 0;
+	private int getForwardDistance(Lane lane, int index) {
+		Lane l = lane;
 
-		// start at next cell
-		index = (index + 1) % cells.size();
-		for (int i = index; i < cells.size(); i++) {
-			if (!cells.get(i).isFree()) {
+		int distance = 0;
+		int cellCount = l.getNumberOfCells();
+
+		Vehicle vehicle = null;
+		while (vehicle == null) {
+			index++;
+			if (index == cellCount) {
+				index = 0;
+				l = lane.getNext();
+				if (l == null) {
+					distance = cellCount - index;
+					break;
+				}
+				cellCount = l.getNumberOfCells();
+			}
+
+			vehicle = l.getCell(index).getVehicle();
+
+			if (vehicle != null) {
 				break;
 			}
 			distance++;
-			if (i == cells.size() - 1) {
-				i = -1;
-			}
 		}
 
 		return distance;
 	}
 
-	@Override
-	public String toString() {
-		// TODO implement usefull
-		return "Road with " + lanes.size() + " lanes.";
+	private boolean canChangeTo(Lane lane, int index) {
+		Lane l = lane;
+		Vehicle vehicle = null;
+
+		int distance = 0;
+		int cellCount = l.getNumberOfCells();
+
+		// start at prev cell
+		for (int i = index - 1; i >= 0; i--) {
+			if (!l.getCells().get(i).isFree()) {
+				vehicle = l.getCells().get(i).getVehicle();
+				break;
+			}
+			distance++;
+
+			if (distance > getMaxVelocity()) {
+				break;
+			}
+
+			if (i == 0) {
+				l = l.getPrev();
+
+				if (l == null) {
+					break;
+				}
+
+				cellCount = l.getNumberOfCells();
+				i = cellCount;
+			}
+		}
+
+		return distance >= getMaxVelocity() || (vehicle != null && vehicle.getSpeed() - 2 <= distance);
 	}
+
 }

@@ -9,6 +9,10 @@ package edu.hm.am.stausimulator.model;
  */
 public class Car extends Vehicle {
 
+	public Car() {
+		super();
+	}
+
 	/**
 	 * Instantiates a new car.
 	 */

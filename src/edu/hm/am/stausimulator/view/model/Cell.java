@@ -33,6 +33,8 @@ public class Cell extends Drawable {
 			Vehicle vehicle = model.getVehicle();
 			int speed = vehicle.getSpeed();
 
+			g.setFont(new Font("Arial", Font.PLAIN, 11));
+
 			FontMetrics fm = g.getFontMetrics();
 
 			int imageWidth = image.getWidth(null);
@@ -41,18 +43,27 @@ public class Cell extends Drawable {
 			int x = getX() + 2;
 			int y = getY() + fm.getHeight() / 2 + 2;
 
+			if (vehicle.hasChangedLane()) {
+				g.setColor(new Color(0, 204, 255));
+				g.fillRect(getX(), getY(), getWidth(), getHeight());
+			}
+
 			// draw car
-			g.drawImage(image, getX() + ((Cell.CELL_WIDTH - imageWidth) / 2), getY() + (Cell.CELL_HEIGHT - imageHeight)
-					/ 2, imageWidth, imageHeight, null);
+			g.drawImage(image, getX() + ((Cell.CELL_WIDTH - imageWidth) / 2), getY() + (Cell.CELL_HEIGHT - imageHeight) / 2, imageWidth, imageHeight, null);
 
 			// draw speed
 			g.setColor(Color.BLACK);
-		
+
+			if (vehicle.hasLingered()) {
+				g.setColor(Color.ORANGE);
+				g.fillRect(x, y - 11, 7, 11);
+			}
+
+			g.setColor(Color.BLACK);
 			if (speed == 0) {
 				g.setColor(Color.RED);
 			}
 
-			g.setFont(new Font("Arial", Font.PLAIN, 11));
 			g.drawString(speed + "", x, y);
 
 		}

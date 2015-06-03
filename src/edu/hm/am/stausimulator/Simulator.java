@@ -5,9 +5,13 @@ package edu.hm.am.stausimulator;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Observable;
+import java.util.Observer;
 
 import edu.hm.am.stausimulator.model.Road;
 
@@ -53,24 +57,16 @@ public class Simulator extends Observable {
 		return false;
 	}
 
-	/*
-	 * public boolean addListener(Runnable runnable) { return
-	 * runner.addRunnable(runnable); }
-	 * 
-	 * public boolean removeListener(Runnable runnable) { return
-	 * runner.removeRunnable(runnable); }
-	 */
-
 	public void start() {
 		runner.start();
-		setChanged();
-		notifyObservers("Start");
+	}
+
+	public void start(int steps) {
+		runner.start(steps);
 	}
 
 	public void stop() {
 		runner.stop();
-		setChanged();
-		notifyObservers("Stop");
 	}
 
 	public boolean isRunning() {
@@ -93,8 +89,19 @@ public class Simulator extends Observable {
 
 	public void save(File directory) {
 		try {
-			for (Road road : roads) {
-				road.save(directory);
+			DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH.mm");
+			File parent = new File(directory, df.format(new Date()) + " Nagel-Schreckenberg-Data");
+			File roadDir;
+
+			parent.mkdir();
+
+			Road road;
+			for (int i = 0; i < roads.size(); i++) {
+				road = roads.get(i);
+				roadDir = new File(parent, "Road " + (i + 1));
+				roadDir.mkdir();
+
+				road.save(roadDir);
 			}
 		} catch (IOException e) {
 			// TODO remove
@@ -108,12 +115,19 @@ public class Simulator extends Observable {
 
 	private Simulator() {
 		roads = new ArrayList<Road>();
-		roads.add(new Road(1));
+		roads.add(new Road());
 		runner = new Runner("Main Runner", Defaults.INTERVAL);
 		runner.addRunnable(new Runnable() {
 			@Override
 			public void run() {
 				nextStep();
+			}
+		});
+		runner.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				instance.setChanged();
+				instance.notifyObservers(arg);
 			}
 		});
 	}

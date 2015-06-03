@@ -1,14 +1,18 @@
 package edu.hm.am.stausimulator.view;
 
 import java.awt.EventQueue;
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -31,11 +35,26 @@ import edu.hm.am.stausimulator.view.panel.RoadPanel;
 public class View {
 
 	// TODO: Remove debug path
-	private final JFileChooser fileChooser = new JFileChooser(new File("C:/Users/Luca/Documents/Studium/Angewandte Mathematik/5. Nagel-Schreckenberg/data"));
-
-	private Simulator instance;
+	private JFileChooser fileChooser;
 
 	private JFrame frame;
+
+	private JMenu mnActions;
+
+	private JMenuItem mntmSave;
+	private JMenuItem mntmReset;
+	private JMenuItem mntmAddRoad;
+	private JMenuItem mntmRemoveRoad;
+	private JMenuItem mntmImport;
+	private JMenuItem mntmExport;
+
+	private JButton btnSingleStep;
+	private JButton btnRun;
+
+	private JSpinner spSteps;
+	private JSpinner spInterval;
+
+	private Simulator instance;
 
 	/**
 	 * Launch the application.
@@ -73,27 +92,32 @@ public class View {
 
 		instance = Simulator.getInstance();
 
+		fileChooser = new JFileChooser(new File("C:/Users/Luca/Documents/Studium/Angewandte Mathematik/5. Nagel-Schreckenberg/data"));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
 		JMenuBar menuBar = new JMenuBar();
-		JMenu mnActions = new JMenu("Actions");
+		mnActions = new JMenu("Actions");
 
-		JMenuItem mntmSave = new JMenuItem("Save");
-		JMenuItem mntmReset = new JMenuItem("Reset");
-		JMenuItem mntmAddRoad = new JMenuItem("Add Road");
-		JMenuItem mntmRemoveRoad = new JMenuItem("Delete Road");
-		JMenuItem mntmImport = new JMenuItem("Import");
-		JMenuItem mntmExport = new JMenuItem("Export");
+		mntmSave = new JMenuItem("Save");
+		mntmReset = new JMenuItem("Reset");
+		mntmAddRoad = new JMenuItem("Add Road");
+		mntmRemoveRoad = new JMenuItem("Delete Road");
+		mntmImport = new JMenuItem("Import");
+		mntmExport = new JMenuItem("Export");
 
-		JButton btnSingleStep = new JButton();
+		btnSingleStep = new JButton();
 		btnSingleStep.setToolTipText("Single Step");
 		btnSingleStep.setIcon(new ImageIcon(ImageLoader.get("step.png")));
 
-		JButton btnRun = new JButton();
+		btnRun = new JButton();
 		btnRun.setToolTipText("Play");
 		btnRun.setIcon(new ImageIcon(ImageLoader.get("play.png")));
 
-		JSpinner spInterval = new JSpinner();
+		spSteps = new JSpinner();
+		spSteps.setModel(new SpinnerNumberModel(Defaults.ROUNDS, 0, 1000, 100));
+		spSteps.setToolTipText("Steps");
+
+		spInterval = new JSpinner();
 		spInterval.setModel(new SpinnerNumberModel(Defaults.INTERVAL, 10, 2000, 10));
 		spInterval.setToolTipText("Interval");
 		spInterval.addChangeListener(new ChangeListener() {
@@ -103,11 +127,17 @@ public class View {
 			}
 		});
 
+		JLabel lblSteps = new JLabel("Steps");
+		JLabel lblInterval = new JLabel("Interval");
+
 		JPanel panel = new JPanel();
-		panel.setLayout(new MigLayout("insets 0", "[20px,fill][20px,fill][75px,fill]", "[20px]"));
+		panel.setLayout(new MigLayout("insets 0", "[20px,fill][20px,fill][25px,fill][75px,fill][25px,fill][75px,fill]", "[20px]"));
 		panel.add(btnSingleStep, "cell 0 0,grow");
 		panel.add(btnRun, "cell 1 0,grow");
-		panel.add(spInterval, "cell 2 0,grow");
+		panel.add(lblSteps, "cell 2 0,grow");
+		panel.add(spSteps, "cell 3 0,grow");
+		panel.add(lblInterval, "cell 4 0,grow");
+		panel.add(spInterval, "cell 5 0,grow");
 
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 
@@ -134,29 +164,33 @@ public class View {
 		mntmAddRoad.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Road road = new Road(4);
+				Road road = new Road();
 				RoadPanel panel = new RoadPanel(road);
-				Simulator.getInstance().addRoad(road);
+				instance.addRoad(road);
 				tabbedPane.addTab("Road " + (tabbedPane.getTabCount() + 1), panel);
 			}
 		});
 		mntmRemoveRoad.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				instance.removeRoad(tabbedPane.getSelectedIndex());
 				tabbedPane.remove(tabbedPane.getSelectedIndex());
+				for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+					tabbedPane.setTitleAt(i, "Road " + (i + 1));
+				}
 			}
 		});
 
 		menuBar.add(mnActions);
 
-		for (Road road : instance.getRoads()) {
-			tabbedPane.addTab("Road " + road.getId(), new RoadPanel(road));
+		for (int i = 0; i < instance.getRoads().size(); i++) {
+			tabbedPane.addTab("Road " + (i + 1), new RoadPanel(instance.getRoads().get(i)));
 		}
 
 		frame = new JFrame();
 		frame.setTitle("Nagel-Schreckenberg Stausimulation");
 		frame.setBounds(10, 10, 1200, 700);
-		frame.setResizable(false);
+		frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setJMenuBar(menuBar);
 		frame.getContentPane().setLayout(new MigLayout("insets 5", "[grow]", "[25px][grow]"));
@@ -173,27 +207,36 @@ public class View {
 		btnRun.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				boolean running = instance.isRunning();
-
-				mntmSave.setEnabled(running);
-				mntmReset.setEnabled(running);
-				mntmAddRoad.setEnabled(running);
-				mntmRemoveRoad.setEnabled(running);
-				mntmImport.setEnabled(running);
-				mntmExport.setEnabled(running);
-				spInterval.setEnabled(running);
-				btnSingleStep.setEnabled(running);
-
-				btnRun.setToolTipText(running ? "Start" : "Stop");
-				btnRun.setIcon(new ImageIcon(ImageLoader.get(running ? "play.png" : "stop.png")));
-
-				if (running) {
+				if (instance.isRunning()) {
 					instance.stop();
 				} else {
-					instance.start();
+					instance.start(((Integer) spSteps.getValue()).intValue());
 				}
-
+				updateUI();
 			}
 		});
+
+		instance.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				updateUI();
+			}
+		});
+	}
+
+	private void updateUI() {
+		boolean stopped = !instance.isRunning();
+		mntmSave.setEnabled(stopped);
+		mntmReset.setEnabled(stopped);
+		mntmAddRoad.setEnabled(stopped);
+		mntmRemoveRoad.setEnabled(stopped);
+		mntmImport.setEnabled(stopped);
+		mntmExport.setEnabled(stopped);
+		spSteps.setEnabled(stopped);
+		spInterval.setEnabled(stopped);
+		btnSingleStep.setEnabled(stopped);
+
+		btnRun.setToolTipText(stopped ? "Start" : "Stop");
+		btnRun.setIcon(new ImageIcon(ImageLoader.get(stopped ? "play.png" : "stop.png")));
 	}
 }

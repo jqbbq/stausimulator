@@ -2,9 +2,12 @@ package edu.hm.am.stausimulator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 
-public class Runner implements Runnable {
+public class Runner extends Observable implements Runnable {
 
+	private int steps;
+	private int run;
 	private int interval;
 	private boolean running;
 
@@ -31,13 +34,23 @@ public class Runner implements Runnable {
 	}
 
 	public void start() {
+		start(0);
+	}
+
+	public void start(int steps) {
+		this.steps = steps;
+		run = 0;
 		running = true;
 		thread = new Thread(this, name);
 		thread.start();
+		setChanged();
+		notifyObservers("Start");
 	}
 
 	public void stop() {
 		running = false;
+		setChanged();
+		notifyObservers("Stop");
 	}
 
 	public void setInterval(int interval) {
@@ -56,6 +69,10 @@ public class Runner implements Runnable {
 	public void run() {
 		try {
 			while (running) {
+				run++;
+				if (steps > 0 && run == steps) {
+					stop();
+				}
 				for (Runnable runnable : runnables) {
 					runnable.run();
 				}

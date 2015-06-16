@@ -1,47 +1,51 @@
 package edu.hm.am.stausimulator.data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RoundData {
-
-	private List<Integer> velocityPerCell;
-
-	private int averageVelocity;
-	private int averageFlow;
-
+	
+	private List<Integer>	velocityPerCell;
+	
+	private double			averageVelocity;
+	private double			flow;
+	
 	public RoundData() {
+		averageVelocity = 0;
+		flow = 0;
+		velocityPerCell = new ArrayList<Integer>();
 	}
-
+	
 	public RoundData(List<Integer> velocities) {
 		velocityPerCell = velocities;
 		averageVelocity = calcAvgVelocity(velocityPerCell);
-		averageFlow = 0;
+		flow = 0;
 	}
-
+	
 	public List<Integer> getVelocityPerCell() {
 		return velocityPerCell;
 	}
-
+	
 	public void setVelocityPerCell(List<Integer> velocityPerCell) {
 		this.velocityPerCell = velocityPerCell;
 		averageVelocity = calcAvgVelocity(velocityPerCell);
 	}
-
-	public int getAverageVelocity() {
+	
+	public double getAverageVelocity() {
 		return averageVelocity;
 	}
-
-	public int getAverageFlow() {
-		return averageFlow;
+	
+	public double getFlow() {
+		return flow;
 	}
-
-	public void setAverageFlow(int averageFlow) {
-		this.averageFlow = averageFlow;
+	
+	public void setFlow(double flow) {
+		this.flow = flow;
 	}
-
-	private int calcAvgVelocity(List<Integer> values) {
-		int vehicles = 0;
-		int sum = 0;
+	
+	private double calcAvgVelocity(List<Integer> values) {
+		double vehicles = 0.0;
+		double sum = 0.0;
 		for (Integer value : values) {
 			if (value != null) {
 				vehicles++;
@@ -50,11 +54,14 @@ public class RoundData {
 		}
 		return sum / vehicles;
 	}
-
+	
 	@Override
 	protected RoundData clone() {
-		RoundData d = new RoundData();
-
-		return d;
+		RoundData round = new RoundData();
+		
+		round.setVelocityPerCell(getVelocityPerCell());
+		round.setFlow(getFlow());
+		
+		return round;
 	}
 }

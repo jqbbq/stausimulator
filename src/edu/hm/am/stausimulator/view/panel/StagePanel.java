@@ -18,50 +18,55 @@ import edu.hm.am.stausimulator.Simulator;
 import edu.hm.am.stausimulator.view.model.Lane;
 
 public class StagePanel extends JPanel {
-
+	
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -5497259938578733439L;
-
-	private JScrollPane scrollPane;
-
-	private Observer roadObserver;
-	private Observer simulatorObserver;
-
-	private edu.hm.am.stausimulator.model.Road road;
-	private Panel panel;
-
-	private List<String> labels;
-	private List<Lane> stages;
-
-	private Simulator instance;
-
-	public StagePanel(edu.hm.am.stausimulator.model.Lane lane) {
-		road = lane.getRoad();
+	private static final long					serialVersionUID	= -5497259938578733439L;
+	
+	private JScrollPane							scrollPane;
+	
+	private Observer							roadObserver;
+	private Observer							simulatorObserver;
+	
+	private edu.hm.am.stausimulator.model.Road	road;
+	
+	private int									laneIndex;
+	
+	private Panel								panel;
+	
+	private List<String>						labels;
+	private List<Lane>							stages;
+	
+	private Simulator							instance;
+	
+	public StagePanel(edu.hm.am.stausimulator.model.Road road, int laneIndex) {
+		this.road = road;
+		this.laneIndex = laneIndex;
+		
 		labels = new ArrayList<>();
 		stages = new ArrayList<Lane>();
-
+		
 		labels.add("Stage 0 - Original");
 		labels.add("Stage 1 - Accelerate");
-		labels.add("Stage 1.5 - Lane Change");
+		// labels.add("Stage 1.5 - Lane Change");
 		labels.add("Stage 2 - Brake");
 		labels.add("Stage 3 - Linger");
 		labels.add("Stage 4 - Move");
-
+		
 		setLayout(new MigLayout("insets 5", "[grow]", "[grow]"));
 		setBackground(Color.WHITE);
-
+		
 		panel = new Panel();
-
+		
 		scrollPane = new JScrollPane();
 		scrollPane.setPreferredSize(this.getSize());
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 		scrollPane.setViewportView(panel);
-
+		
 		add(scrollPane, "cell 0 0,grow");
-
+		
 		instance = Simulator.getInstance();
 		roadObserver = new Observer() {
 			@Override
@@ -71,18 +76,20 @@ public class StagePanel extends JPanel {
 						if (((String) arg).startsWith("Stage 0")) {
 							stages = new ArrayList<Lane>();
 						}
-						stages.add(new Lane(lane.export()));
-					} else if (((String) arg).startsWith("Step")) {
+						stages.add(new Lane(getLane().export()));
+					}
+					else if (((String) arg).startsWith("Step")) {
 						panel.repaint();
 						scrollPane.revalidate();
-					} else if ("Reset".equals(arg)) {
+					}
+					else if ("Reset".equals(arg)) {
 						stages = null;
 					}
-
+					
 				}
 			}
 		};
-
+		
 		simulatorObserver = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
@@ -93,59 +100,61 @@ public class StagePanel extends JPanel {
 				}
 			}
 		};
-
+		
 		road.addObserver(roadObserver);
 		instance.addObserver(simulatorObserver);
 	}
-
+	
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
 		road.deleteObserver(roadObserver);
 		instance.deleteObserver(simulatorObserver);
 	}
-
+	
+	private edu.hm.am.stausimulator.model.Lane getLane() {
+		return road.getLane(laneIndex);
+	}
+	
 	private class Panel extends JPanel {
-
-		private static final long serialVersionUID = -3515344269392271823L;
-
+		
+		private static final long	serialVersionUID	= -3515344269392271823L;
+		
 		@Override
 		public void paint(Graphics g) {
 			super.paint(g);
-
+			
 			if (stages != null) {
 				int x = 5;
 				int y = 5;
-
+				
 				Lane lane;
-
+				
 				for (int s = 0; s < stages.size(); s++) {
-
-					if (s != 2 || road.isAllowLaneChange()) {
-						y += 10;
-
-						// draw label
-						g.setColor(Color.BLACK);
-						g.setFont(new Font("Arial", Font.PLAIN, 10));
-						g.drawString(labels.get(s), x, y);
-
-						y += 2;
-
-						lane = stages.get(s);
-						if (s == 0) {
-							Dimension size = new Dimension(lane.getWidth() + 10, lane.getHeight() * stages.size() + (stages.size() + 1) * 5);
-							setSize(size);
-							setPreferredSize(size);
-							setMinimumSize(size);
-							setMaximumSize(size);
-						}
-						lane.setX(x);
-						lane.setY(y);
-
-						lane.draw(g);
-
-						y += lane.getHeight() + 5;
+					
+					y += 10;
+					
+					// draw label
+					g.setColor(Color.BLACK);
+					g.setFont(new Font("Arial", Font.PLAIN, 10));
+					g.drawString(labels.get(s), x, y);
+					
+					y += 2;
+					
+					lane = stages.get(s);
+					if (s == 0) {
+						Dimension size = new Dimension(lane.getWidth() + 10, lane.getHeight() * stages.size() + (stages.size() + 1) * 5);
+						setSize(size);
+						setPreferredSize(size);
+						setMinimumSize(size);
+						setMaximumSize(size);
 					}
+					lane.setX(x);
+					lane.setY(y);
+					
+					lane.draw(g);
+					
+					y += lane.getHeight() + 5;
 				}
 			}
 		}

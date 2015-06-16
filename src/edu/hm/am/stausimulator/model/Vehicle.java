@@ -8,21 +8,21 @@ package edu.hm.am.stausimulator.model;
  * The Class Vehicle.
  */
 public abstract class Vehicle {
-
+	
 	/** The speed. */
-	private int maxspeed;
-	private int speed;
-
-	private boolean changedLane;
-	private boolean lingered;
-
+	private int		maxspeed;
+	private int		speed;
+	
+	private boolean	changedLane;
+	private boolean	lingered;
+	
 	public Vehicle() {
 		speed = 0;
 		maxspeed = 0;
 		changedLane = false;
 		lingered = false;
 	}
-
+	
 	/**
 	 * Instantiates a new vehicle.
 	 *
@@ -34,7 +34,7 @@ public abstract class Vehicle {
 		changedLane = false;
 		lingered = false;
 	}
-
+	
 	/**
 	 * Gets the speed.
 	 *
@@ -43,7 +43,7 @@ public abstract class Vehicle {
 	public int getSpeed() {
 		return speed;
 	}
-
+	
 	/**
 	 * Sets the speed.
 	 *
@@ -52,11 +52,11 @@ public abstract class Vehicle {
 	public void setSpeed(int speed) {
 		this.speed = speed;
 	}
-
+	
 	public void setLingered(boolean lingered) {
 		this.lingered = lingered;
 	}
-
+	
 	public boolean speedUp() {
 		if (speed < maxspeed) {
 			speed++;
@@ -64,7 +64,7 @@ public abstract class Vehicle {
 		}
 		return false;
 	}
-
+	
 	public boolean slowDown() {
 		if (speed > 0) {
 			speed--;
@@ -72,24 +72,24 @@ public abstract class Vehicle {
 		}
 		return false;
 	}
-
+	
 	public boolean linger() {
 		lingered = true;
 		return slowDown();
 	}
-
+	
 	public boolean hasLingered() {
 		return lingered;
 	}
-
+	
 	public boolean hasChangedLane() {
 		return changedLane;
 	}
-
+	
 	public void setChangedLane() {
 		setChangedLane(true);
 	}
-
+	
 	public void setChangedLane(boolean changed) {
 		changedLane = changed;
 	}

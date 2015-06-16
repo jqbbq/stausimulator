@@ -20,35 +20,35 @@ import edu.hm.am.stausimulator.model.Road;
  * The Class Simulator.
  */
 public class Simulator extends Observable {
-
-	private static Simulator instance;
-
-	private Runner runner;
-
-	private List<Road> roads;
-
+	
+	private static Simulator	instance;
+	
+	private Runner				runner;
+	
+	private List<Road>			roads;
+	
 	public static Simulator getInstance() {
 		if (instance == null) {
 			instance = new Simulator();
 		}
 		return instance;
 	}
-
+	
 	public List<Road> getRoads() {
 		return roads;
 	}
-
+	
 	public Road getRoad(int index) {
 		if (index >= roads.size()) {
 			return null;
 		}
 		return roads.get(index);
 	}
-
+	
 	public boolean addRoad(Road road) {
 		return roads.add(road);
 	}
-
+	
 	public boolean removeRoad(int index) {
 		if (index < roads.size()) {
 			roads.remove(index);
@@ -56,29 +56,29 @@ public class Simulator extends Observable {
 		}
 		return false;
 	}
-
+	
 	public void start() {
 		runner.start();
 	}
-
+	
 	public void start(int steps) {
 		runner.start(steps);
 	}
-
+	
 	public void stop() {
 		runner.stop();
 	}
-
+	
 	public boolean isRunning() {
 		return runner.isRunning();
 	}
-
+	
 	public void setInterval(int interval) {
 		runner.setInterval(interval);
 		setChanged();
 		notifyObservers("Interval changed");
 	}
-
+	
 	public void nextStep() {
 		for (Road road : roads) {
 			road.nextStep();
@@ -86,21 +86,21 @@ public class Simulator extends Observable {
 		setChanged();
 		notifyObservers("Step");
 	}
-
+	
 	public void save(File directory) {
 		try {
 			DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH.mm");
 			File parent = new File(directory, df.format(new Date()) + " Nagel-Schreckenberg-Data");
 			File roadDir;
-
+			
 			parent.mkdir();
-
+			
 			Road road;
 			for (int i = 0; i < roads.size(); i++) {
 				road = roads.get(i);
 				roadDir = new File(parent, "Road " + (i + 1));
 				roadDir.mkdir();
-
+				
 				road.save(roadDir);
 			}
 		} catch (IOException e) {
@@ -108,11 +108,11 @@ public class Simulator extends Observable {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void reset() {
-
+		
 	}
-
+	
 	private Simulator() {
 		roads = new ArrayList<Road>();
 		roads.add(new Road());
@@ -131,5 +131,5 @@ public class Simulator extends Observable {
 			}
 		});
 	}
-
+	
 }

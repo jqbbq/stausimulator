@@ -15,10 +15,14 @@ import java.util.Observable;
 import java.util.Observer;
 
 import edu.hm.am.stausimulator.Defaults;
+import edu.hm.am.stausimulator.chart.AVGFlowChart;
+import edu.hm.am.stausimulator.chart.AVGSpeedChart;
+import edu.hm.am.stausimulator.chart.PositionChart;
 import edu.hm.am.stausimulator.chart.VDRChart;
-import edu.hm.am.stausimulator.chart.VDRChart2;
 import edu.hm.am.stausimulator.data.LaneData;
 import edu.hm.am.stausimulator.data.RoundData;
+import edu.hm.am.stausimulator.factory.CellFactory;
+import edu.hm.am.stausimulator.factory.CellFactory.Distribution;
 import edu.hm.am.stausimulator.factory.VehicleFactory;
 
 // TODO: Auto-generated Javadoc
@@ -26,7 +30,7 @@ import edu.hm.am.stausimulator.factory.VehicleFactory;
  * The Class Lane.
  */
 public class Lane extends Observable {
-
+	
 	/**
 	 * The Enum Direction.
 	 */
@@ -36,31 +40,33 @@ public class Lane extends Observable {
 		/** The south. */
 		SOUTH
 	}
-
+	
 	/** The direction. */
-	private final Direction direction;
-
-	private double lingerProbability;
-
-	private double startingProbability;
-
+	private final Direction	direction;
+	
+	private double			lingerProbability;
+	
+	private double			startingProbability;
+	
 	/** The cells. */
-	private List<Cell> cells;
-
-	private Road road;
-
-	private Lane next;
-	private Lane prev;
-
-	private LaneData data;
-
+	private List<Cell>		cells;
+	
+	private Road			road;
+	
+	private Lane			next;
+	private Lane			prev;
+	
+	private LaneData		data;
+	
+	private Observer		roadObserver;
+	
 	/**
 	 * Instantiates a new lane.
 	 */
 	public Lane(Road road) {
 		this(road, Direction.NORTH);
 	}
-
+	
 	/**
 	 * Instantiates a new lane.
 	 *
@@ -69,40 +75,40 @@ public class Lane extends Observable {
 	public Lane(Road road, Direction direction) {
 		this.road = road;
 		this.direction = direction;
-
+		
 		next = this;
 		prev = this;
 		data = new LaneData(this);
-
+		
 		lingerProbability = Defaults.LINGER_PROBABILITY;
 		startingProbability = Defaults.STARTING_PROBABILITY;
-
-		initCells();
-		initVehicles();
-
-		data.add(new RoundData(export()));
-
-		road.addObserver(new Observer() {
+		
+		init();
+		
+		roadObserver = new Observer() {
 			@Override
 			public void update(Observable o, Object arg) {
-				if ("Changed Density".equals(arg) || "Changed Max Speed".equals(arg)) {
-					initVehicles();
-				} else if ("Changed Cells".equals(arg)) {
-					initCells();
-					initVehicles();
+				if ("Changed Density".equals(arg) || "Changed Max Velocity".equals(arg) || "Changed Cells".equals(arg)) {
+					init();
+				}
+				else if ("Changed Model".equals(arg)) {
+					if (road.getModel() instanceof LaneChangeModel) {
+						resetLanes();
+					}
 				}
 			}
-		});
+		};
+		road.addObserver(roadObserver);
 	}
-
+	
 	public Road getRoad() {
 		return road;
 	}
-
+	
 	public void setRoad(Road road) {
 		this.road = road;
 	}
-
+	
 	/**
 	 * Gets the direction.
 	 *
@@ -111,101 +117,105 @@ public class Lane extends Observable {
 	public Direction getDirection() {
 		return direction;
 	}
-
+	
 	public Lane getPrev() {
 		return prev;
 	}
-
+	
 	public void setPrev(Lane prev) {
 		this.prev = prev;
-
+		
 		setChanged();
 		notifyObservers("Changed previous lane");
 	}
-
+	
 	public Lane getNext() {
 		return next;
 	}
-
+	
 	public void setNext(Lane next) {
 		this.next = next;
-
+		
 		setChanged();
-		notifyObservers("Changed previous lane");
+		notifyObservers("Changed next lane");
 	}
-
+	
 	public Cell getCell(int index) {
 		return cells.get(index);
 	}
-
+	
 	public List<Cell> getCells() {
 		return cells;
 	}
-
+	
 	public LaneData getData() {
 		return data;
 	}
-
+	
 	public int getMaxVelocity() {
 		return road.getMaxVelocity();
 	}
-
+	
 	public int getNumberOfCells() {
 		return cells.size();
 	}
-
+	
 	public double getLingerProbability() {
 		return lingerProbability;
 	}
-
+	
 	public void setLingerProbability(double probability) {
 		Map<String, Object> changeData = new HashMap<>();
 		changeData.put("from", new Double(lingerProbability));
 		changeData.put("to", new Double(probability));
 		data.addChange(new Integer(road.getStep()), "probability", changeData);
-
+		
 		lingerProbability = probability;
-
+		
+		setChanged();
 		notifyObservers("Changed Probability");
 	}
-
+	
 	public double getStartingProbability() {
 		return startingProbability;
 	}
-
+	
 	public void setStartingProbability(double probability) {
 		Map<String, Object> changeData = new HashMap<>();
 		changeData.put("from", new Double(startingProbability));
 		changeData.put("to", new Double(probability));
 		data.addChange(new Integer(road.getStep()), "startingProbability", changeData);
-
+		
 		startingProbability = probability;
-
+		
+		setChanged();
 		notifyObservers("Changed Starting Probability");
 	}
-
+	
 	public void save(File directory) throws IOException {
 		// write CSV
 		File csv = new File(directory, "data.csv");
 		FileWriter writer = new FileWriter(csv);
-
+		
 		data.write(writer);
-
+		
 		writer.flush();
 		writer.close();
-
+		
 		// write VDR-Diagramm
-		VDRChart.write(data, new File(directory, "vdr-chart-color.png"));
-		VDRChart2.write(data, new File(directory, "vdr-chart-black&white.png"));
+		VDRChart.write(data, new File(directory, "vdr-chart.png"));
+		PositionChart.write(data, new File(directory, "position-chart.png"));
+		AVGFlowChart.write(data, new File(directory, "average-flow.png"));
+		AVGSpeedChart.write(data, new File(directory, "average-speed.png"));
 	}
-
+	
 	public List<Integer> export() {
 		List<Integer> data = new ArrayList<>();
 		Integer value = null;
-
+		
 		Iterator<Cell> it = cells.listIterator();
 		Cell cell = null;
-
+		
 		while (it.hasNext()) {
 			cell = it.next();
 			value = null;
@@ -217,10 +227,10 @@ public class Lane extends Observable {
 			}
 			data.add(value);
 		}
-
+		
 		return data;
 	}
-
+	
 	public void clear() {
 		for (Cell cell : cells) {
 			if (!cell.isFree()) {
@@ -229,40 +239,30 @@ public class Lane extends Observable {
 			}
 		}
 	}
-
+	
 	public void addData(RoundData data) {
 		this.data.add(data);
 	}
-
+	
 	@Override
 	public String toString() {
 		return super.toString();
 	}
-
-	private void initCells() {
-		cells = new ArrayList<Cell>();
-		for (int i = 0; i < road.getNumberOfCells(); i++) {
-			cells.add(new Cell());
-		}
+	
+	private void init() {
+		cells = CellFactory.createCells(road.getNumberOfCells(), VehicleFactory.createCars((int) (road.getDensity() * road.getNumberOfCells()), road.getMaxVelocity()), Distribution.EVEN);
 	}
-
-	private void initVehicles() {
-		// remove all cars
-		for (int i = 0; i < cells.size(); i++) {
-			cells.get(i).setVehicle(null);
-		}
-
-		// init vehicles
-		Cell cell;
-		List<Vehicle> vehicles = VehicleFactory.createCars((int) (road.getDensity() * road.getNumberOfCells()), road.getMaxVelocity());
-		for (Vehicle vehicle : vehicles) {
-			while (true) {
-				cell = cells.get(Road.RANDOM.nextInt(cells.size()));
-				if (cell.isFree()) {
-					cell.setVehicle(vehicle);
-					break;
-				}
-			}
-		}
+	
+	private void resetLanes() {
+		prev = this;
+		next = this;
+		setChanged();
+		notifyObservers("Changed Prev/Next Lane");
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		road.deleteObserver(roadObserver);
 	}
 }

@@ -14,8 +14,6 @@ import edu.hm.am.stausimulator.view.model.Cell;
 
 public class ImageLoader {
 	
-	private static final String			PREFIX		= "";
-	
 	private static Map<String, Image>	images;
 	
 	private static boolean				isInited	= false;

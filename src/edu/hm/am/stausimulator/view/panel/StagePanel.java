@@ -17,7 +17,7 @@ import net.miginfocom.swing.MigLayout;
 import edu.hm.am.stausimulator.Simulator;
 import edu.hm.am.stausimulator.view.model.Lane;
 
-public class StagePanel extends JPanel {
+public class StagePanel extends Panel {
 	
 	/**
 	 * 
@@ -106,10 +106,15 @@ public class StagePanel extends JPanel {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void destroy() {
 		road.deleteObserver(roadObserver);
 		instance.deleteObserver(simulatorObserver);
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private edu.hm.am.stausimulator.model.Lane getLane() {

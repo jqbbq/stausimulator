@@ -89,6 +89,9 @@ public class Road extends Observable {
 	}
 	
 	public Lane getLane(int index) {
+		if (index < 0 || index > getNumberOfLanes()) {
+			return null;
+		}
 		return model.getLane(index);
 	}
 	
@@ -139,9 +142,12 @@ public class Road extends Observable {
 	}
 	
 	public void setModel(Model model) {
-		this.model.deleteObserver(modelObserver);
+		// destory old model
+		this.model.destroy();
+		
 		this.model = model;
 		this.model.addObserver(modelObserver);
+		
 		setChanged();
 		notifyObservers("Changed Model");
 	}
@@ -177,6 +183,21 @@ public class Road extends Observable {
 		
 		setChanged();
 		notifyObservers("Reset");
+	}
+	
+	public void destory() {
+		deleteObservers();
+		model.deleteObserver(modelObserver);
+		
+		model.destroy();
+		model = null;
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 }

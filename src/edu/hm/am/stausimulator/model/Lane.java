@@ -227,7 +227,6 @@ public class Lane extends Observable {
 			}
 			data.add(value);
 		}
-		
 		return data;
 	}
 	
@@ -260,9 +259,23 @@ public class Lane extends Observable {
 		notifyObservers("Changed Prev/Next Lane");
 	}
 	
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void destroy() {
+		deleteObservers();
 		road.deleteObserver(roadObserver);
+		
+		cells = null;
+		data = null;
+		prev = null;
+		next = null;
+		road = null;
+		
+		roadObserver = null;
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

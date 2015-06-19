@@ -145,7 +145,7 @@ public abstract class Model extends Observable {
 			}
 		}
 		
-		return distance >= lane.getMaxVelocity() || (vehicle != null && vehicle.getSpeed() - 2 <= distance);
+		return distance >= lane.getMaxVelocity() || (vehicle != null && ((vehicle.getSpeed() - 2) <= distance));
 	}
 	
 	protected void init() {
@@ -160,6 +160,9 @@ public abstract class Model extends Observable {
 			@Override
 			public void update(Observable o, Object arg) {
 				if ("Changed Lanes".equals(arg)) {
+					for (int i = 0; i < lanes.size(); i++) {
+						lanes.get(i).destroy();
+					}
 					data = new ArrayList<RoundData>();
 					lanes = new ArrayList<Lane>();
 					for (int i = 0; i < getLaneCount(); i++) {
@@ -179,9 +182,24 @@ public abstract class Model extends Observable {
 		super.notifyObservers(arg);
 	}
 	
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void destroy() {
+		deleteObservers();
 		road.deleteObserver(roadObserver);
+		
+		for (Lane lane : lanes) {
+			lane.destroy();
+		}
+		
+		road = null;
+		data = null;
+		lanes = null;
+		roadObserver = null;
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

@@ -19,7 +19,6 @@ import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
 import edu.hm.am.stausimulator.Simulator;
-import edu.hm.am.stausimulator.model.CityModel;
 import edu.hm.am.stausimulator.model.LaneChangeModel;
 import edu.hm.am.stausimulator.model.Model;
 import edu.hm.am.stausimulator.model.Road;
@@ -27,7 +26,7 @@ import edu.hm.am.stausimulator.model.StandardModel;
 import edu.hm.am.stausimulator.model.StartingLingerModel;
 import edu.hm.am.stausimulator.view.ImageLoader;
 
-public class RoadPanel extends JPanel {
+public class RoadPanel extends Panel {
 	
 	private static final long	serialVersionUID	= -6399513557243691428L;
 	
@@ -78,7 +77,7 @@ public class RoadPanel extends JPanel {
 			}
 		});
 		
-		cbCells.setModel(new DefaultComboBoxModel<>(new Integer[] { 50, 100, 150, 200, 300, 400, 500, 1000, 1500, 2000 }));
+		cbCells.setModel(new DefaultComboBoxModel<>(new Integer[] { 10, 20, 30, 40, 50, 100, 150, 200, 300, 400, 500, 1000, 1500, 2000 }));
 		cbCells.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -114,7 +113,6 @@ public class RoadPanel extends JPanel {
 		cbModel.addItem(StandardModel.class.getSimpleName());
 		cbModel.addItem(StartingLingerModel.class.getSimpleName());
 		cbModel.addItem(LaneChangeModel.class.getSimpleName());
-		cbModel.addItem(CityModel.class.getSimpleName());
 		cbModel.setSelectedIndex(0);
 		cbModel.addActionListener(new ActionListener() {
 			
@@ -171,7 +169,10 @@ public class RoadPanel extends JPanel {
 				if ("Changed Lanes".equals(arg)) {
 					int count = tabbedPane.getTabCount();
 					for (int i = 1; i < count; i++) {
-						tabbedPane.remove(1);
+						LanePanel panel = (LanePanel) tabbedPane.getComponent(1);
+						tabbedPane.remove(panel);
+						panel.destroy();
+						
 					}
 					for (int i = 0; i < road.getLanes().size(); i++) {
 						tabbedPane.addTab("Lane " + (i + 1), null, new LanePanel(road, i), null);
@@ -212,10 +213,16 @@ public class RoadPanel extends JPanel {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void destroy() {
 		road.deleteObserver(roadObserver);
 		Simulator.getInstance().deleteObserver(simulatorObserver);
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void update() {

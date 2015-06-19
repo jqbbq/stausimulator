@@ -24,7 +24,7 @@ import edu.hm.am.stausimulator.view.model.Lane;
 /**
  * The Class CellularAutomataPanel.
  */
-public class CellularAutomataPanel extends JPanel {
+public class CellularAutomataPanel extends Panel {
 	
 	/** The Constant serialVersionUID. */
 	private static final long	serialVersionUID	= 1L;
@@ -93,10 +93,16 @@ public class CellularAutomataPanel extends JPanel {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void destroy() {
 		road.deleteObserver(roadObserver);
 		Simulator.getInstance().deleteObserver(simulatorObserver);
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private class ImagePanel extends JPanel {

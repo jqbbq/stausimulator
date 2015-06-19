@@ -22,9 +22,9 @@ import edu.hm.am.stausimulator.model.Road;
 public class FlowFundamentalChart {
 	
 	private static final int	ROUNDS			= 100;
-	private static final int	CELLS			= 250;
+	private static final int	CELLS			= 200;
 	private static final double	DENSITY_START	= 0.001;
-	private static final double	DENSITY_STEP	= 0.005;
+	private static final double	DENSITY_STEP	= 0.003;
 	private static final double	DENSITY_END		= 1;
 	
 	public static JFreeChart draw(JLabel statusLabel) {
@@ -81,7 +81,7 @@ public class FlowFundamentalChart {
 		renderer.setSeriesPaint(2, Color.RED);
 		
 		renderer.setSeriesShape(3, new Ellipse2D.Double(-1, -1, 2, 2));
-		renderer.setSeriesPaint(3, Color.GREEN);
+		renderer.setSeriesPaint(3, new Color(0, 100, 0));
 		
 		((XYPlot) chart.getPlot()).setRenderer(renderer);
 		
@@ -101,7 +101,9 @@ public class FlowFundamentalChart {
 			road.nextStep();
 		}
 		
-		return lane.getData().getAll();
+		List<RoundData> data = lane.getData().getAll();
+		road.destory();
+		return data;
 	}
 	
 	private static void parseData(List<List<RoundData>> data, XYSeries series) {

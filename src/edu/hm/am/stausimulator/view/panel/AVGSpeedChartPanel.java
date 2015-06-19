@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.swing.JPanel;
-
 import net.miginfocom.swing.MigLayout;
 
 import org.jfree.chart.ChartPanel;
@@ -16,12 +14,11 @@ import edu.hm.am.stausimulator.chart.AVGSpeedChart;
 import edu.hm.am.stausimulator.data.LaneData;
 import edu.hm.am.stausimulator.model.Road;
 
-public class AVGSpeedChartPanel extends JPanel {
+public class AVGSpeedChartPanel extends Panel {
 	
 	private static final long	serialVersionUID	= -2497484297331437275L;
 	
 	private Road				road;
-	
 	private int					laneIndex;
 	
 	private Observer			observer;
@@ -67,9 +64,14 @@ public class AVGSpeedChartPanel extends JPanel {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
+	public void destroy() {
 		Simulator.getInstance().deleteObserver(observer);
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private LaneData getLaneData() {

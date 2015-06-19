@@ -16,7 +16,7 @@ import edu.hm.am.stausimulator.Simulator;
 import edu.hm.am.stausimulator.chart.VDRChart;
 import edu.hm.am.stausimulator.model.Road;
 
-public class VDRChartPanel extends JPanel {
+public class VDRChartPanel extends Panel {
 	
 	private static final long	serialVersionUID	= -2497484297331437275L;
 	
@@ -28,7 +28,6 @@ public class VDRChartPanel extends JPanel {
 	private JScrollPane			scrollPane;
 	
 	public VDRChartPanel(Road road, int laneIndex) {
-		
 		this.road = road;
 		this.laneIndex = laneIndex;
 		
@@ -65,10 +64,15 @@ public class VDRChartPanel extends JPanel {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		// runner.stop();
+	public void destroy() {
 		Simulator.getInstance().deleteObserver(observer);
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private class ImagePanel extends JPanel {

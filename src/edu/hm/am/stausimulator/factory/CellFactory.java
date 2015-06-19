@@ -41,20 +41,22 @@ public class CellFactory {
 	}
 	
 	private static void evenDistribution(List<Cell> cells, List<Vehicle> vehicles) {
-		int step = cells.size() / vehicles.size();
-		double mod = (cells.size() * 1.0) / vehicles.size() - step;
-		
-		int position = 0;
-		double x = 0;
-		
-		for (Vehicle vehicle : vehicles) {
-			cells.get(position).setVehicle(vehicle);
+		if (vehicles.size() > 0) {
+			int step = cells.size() / vehicles.size();
+			double mod = (cells.size() * 1.0) / vehicles.size() - step;
 			
-			position += step;
-			x += mod;
-			if (x > 1) {
-				position++;
-				x -= 1;
+			int position = 0;
+			double x = 0;
+			
+			for (Vehicle vehicle : vehicles) {
+				cells.get(position).setVehicle(vehicle);
+				
+				position += step;
+				x += mod;
+				if (x > 1) {
+					position++;
+					x -= 1;
+				}
 			}
 		}
 	}

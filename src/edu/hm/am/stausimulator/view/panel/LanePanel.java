@@ -22,7 +22,7 @@ import edu.hm.am.stausimulator.model.Model;
 import edu.hm.am.stausimulator.model.Road;
 import edu.hm.am.stausimulator.model.StartingLingerModel;
 
-public class LanePanel extends JPanel {
+public class LanePanel extends Panel {
 	
 	private static final long	serialVersionUID	= -4734523069383121819L;
 	
@@ -31,8 +31,9 @@ public class LanePanel extends JPanel {
 	private Observer			simulatorObserver;
 	
 	private Road				road;
-	
 	private int					laneIndex;
+	
+	private JTabbedPane			tabbedPane;
 	
 	public LanePanel(Road road, int laneIndex) {
 		this.road = road;
@@ -130,9 +131,9 @@ public class LanePanel extends JPanel {
 		settings.add(cbPrevLane, "cell 2 1,grow");
 		settings.add(cbNextLane, "cell 3 1,grow");
 		
-		JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("VDR Diagramm", new VDRChartPanel(road, laneIndex));
-		tabbedPane.addTab("VDR2 Diagramm", new VDRChartPanel2(road, laneIndex));
+		tabbedPane.addTab("Position Diagramm", new PositionChartPanel(road, laneIndex));
 		tabbedPane.addTab("Stages", new StagePanel(road, laneIndex));
 		tabbedPane.addTab("Average Velocity", new AVGSpeedChartPanel(road, laneIndex));
 		tabbedPane.addTab("Average Flow", new AVGFlowChartPanel(road, laneIndex));
@@ -198,13 +199,20 @@ public class LanePanel extends JPanel {
 	}
 	
 	@Override
-	protected void finalize() throws Throwable {
-		// TODO Auto-generated method stub
-		super.finalize();
+	public void destroy() {
+		for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+			((Panel) tabbedPane.getComponent(i)).destroy();
+		}
 		
-		getLane().deleteObserver(laneObserver);
 		road.deleteObserver(roadObserver);
 		Simulator.getInstance().deleteObserver(simulatorObserver);
+		
+		try {
+			finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 }

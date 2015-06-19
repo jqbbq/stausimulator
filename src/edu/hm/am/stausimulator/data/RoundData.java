@@ -49,7 +49,7 @@ public class RoundData {
 		for (Integer value : values) {
 			if (value != null) {
 				vehicles++;
-				sum += value.intValue();
+				sum += Math.abs(value.intValue());
 			}
 		}
 		return sum / vehicles;

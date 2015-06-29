@@ -8,24 +8,30 @@ import java.util.Random;
 
 import edu.hm.am.stausimulator.data.RoundData;
 
+/**
+ * Basic Model Class
+ * 
+ * @author Luca Spataro
+ */
 public abstract class Model extends Observable {
 	
+	// random number generator
 	protected static final Random	RANDOM	= new Random();
 	
 	private Observer				roadObserver;
 	
+	// road
 	private Road					road;
 	
+	// lanes of road
 	private List<Lane>				lanes;
+	
+	// data per round
 	private List<RoundData>			data;
 	
 	private boolean					inited	= false;
 	
 	public Model() {
-	}
-	
-	protected Model(Road road) {
-		this.road = road;
 	}
 	
 	public abstract void stage0();
@@ -38,6 +44,9 @@ public abstract class Model extends Observable {
 	
 	public abstract void stage4();
 	
+	/**
+	 * execute next Step by executing all stages
+	 */
 	public void nextStep() {
 		if (!inited) {
 			init();
@@ -84,6 +93,13 @@ public abstract class Model extends Observable {
 		return road.getNumberOfCells();
 	}
 	
+	/**
+	 * Calculate distance to the next car on lane.
+	 * 
+	 * @param lane Lane to search in
+	 * @param index Position from where to search forward
+	 * @return Distance to next Car
+	 */
 	protected int getForwardDistance(Lane lane, int index) {
 		Lane l = lane;
 		
@@ -114,6 +130,14 @@ public abstract class Model extends Observable {
 		return distance;
 	}
 	
+	/**
+	 * Check whether or not a Car can change to the Lane. Checks forward and
+	 * backward distance on road from index.
+	 * 
+	 * @param lane Lane to check
+	 * @param index Position of Car
+	 * @return Wheter the Car can change
+	 */
 	protected boolean canChangeTo(Lane lane, int index) {
 		Lane l = lane;
 		Vehicle vehicle = null;
@@ -129,10 +153,13 @@ public abstract class Model extends Observable {
 			}
 			distance++;
 			
+			// if distance is already greater than the max velocity,
+			// we don't care anymore and stop
 			if (distance > lane.getMaxVelocity()) {
 				break;
 			}
 			
+			// at start of road switch to prev lane
 			if (i == 0) {
 				l = l.getPrev();
 				
@@ -145,9 +172,13 @@ public abstract class Model extends Observable {
 			}
 		}
 		
+		// distance >= MAX_VELOCITY or vehicle.getSpeed() - 2 <= distance
 		return distance >= lane.getMaxVelocity() || (vehicle != null && ((vehicle.getSpeed() - 2) <= distance));
 	}
 	
+	/**
+	 * Initialize Model
+	 */
 	protected void init() {
 		data = new ArrayList<RoundData>();
 		lanes = new ArrayList<Lane>();
@@ -182,6 +213,9 @@ public abstract class Model extends Observable {
 		super.notifyObservers(arg);
 	}
 	
+	/**
+	 * Destroy Model
+	 */
 	public void destroy() {
 		deleteObservers();
 		road.deleteObserver(roadObserver);

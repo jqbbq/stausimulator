@@ -15,9 +15,8 @@ import java.util.Observer;
 
 import edu.hm.am.stausimulator.model.Road;
 
-// TODO: Auto-generated Javadoc
 /**
- * The Class Simulator.
+ * Simulator instance.
  */
 public class Simulator extends Observable {
 	
@@ -104,7 +103,6 @@ public class Simulator extends Observable {
 				road.save(roadDir);
 			}
 		} catch (IOException e) {
-			// TODO remove
 			e.printStackTrace();
 		}
 	}

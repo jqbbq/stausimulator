@@ -13,10 +13,10 @@ import javax.swing.ScrollPaneConstants;
 
 import net.miginfocom.swing.MigLayout;
 import edu.hm.am.stausimulator.Simulator;
-import edu.hm.am.stausimulator.chart.VDRChart;
+import edu.hm.am.stausimulator.chart.SpeedChart;
 import edu.hm.am.stausimulator.model.Road;
 
-public class VDRChartPanel extends Panel {
+public class SpeedChartPanel extends Panel {
 	
 	private static final long	serialVersionUID	= -2497484297331437275L;
 	
@@ -27,7 +27,7 @@ public class VDRChartPanel extends Panel {
 	
 	private JScrollPane			scrollPane;
 	
-	public VDRChartPanel(Road road, int laneIndex) {
+	public SpeedChartPanel(Road road, int laneIndex) {
 		this.road = road;
 		this.laneIndex = laneIndex;
 		
@@ -83,7 +83,7 @@ public class VDRChartPanel extends Panel {
 		public void paint(Graphics g) {
 			super.paint(g);
 			
-			BufferedImage image = VDRChart.draw(road.getLane(laneIndex).getData(), (int) scrollPane.getVisibleRect().getHeight(), false, false);
+			BufferedImage image = SpeedChart.draw(road.getLane(laneIndex).getData(), (int) scrollPane.getVisibleRect().getHeight(), false, false);
 			Dimension dimension = new Dimension(image.getWidth(), image.getHeight());
 			
 			g.drawImage(image, 0, 0, null);

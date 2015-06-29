@@ -21,7 +21,7 @@ public class Cell extends Drawable {
 	public Cell(int x, int y, edu.hm.am.stausimulator.model.Cell model) {
 		super(Type.RECT, x, y, CELL_WIDTH, CELL_HEIGHT);
 		this.model = model;
-		image = ImageLoader.get("car2.png");
+		image = ImageLoader.get("car.png");
 	}
 	
 	@Override
@@ -34,7 +34,7 @@ public class Cell extends Drawable {
 			
 			int speed = vehicle.getSpeed();
 			
-			g.setFont(new Font("Arial", Font.PLAIN, 11));
+			g.setFont(new Font("Arial", Font.PLAIN, 14));
 			
 			FontMetrics fm = g.getFontMetrics();
 			
@@ -57,7 +57,7 @@ public class Cell extends Drawable {
 			
 			if (vehicle.hasLingered()) {
 				g.setColor(Color.ORANGE);
-				g.fillRect(x, y - 11, 7, 11);
+				g.fillRect(x, y - 14, 7, 14);
 			}
 			
 			g.setColor(Color.BLACK);

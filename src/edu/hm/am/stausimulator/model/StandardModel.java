@@ -5,16 +5,22 @@ import java.util.List;
 
 import edu.hm.am.stausimulator.data.RoundData;
 
+/**
+ * 
+ * Implementation of the Standard Model
+ * 
+ * @author Luca Spataro
+ *
+ */
 public class StandardModel extends Model {
 	
 	public StandardModel() {
 		super();
 	}
 	
-	protected StandardModel(Road road) {
-		super(road);
-	}
-	
+	/**
+	 * Save last round data and clear lanes.
+	 */
 	@Override
 	public void stage0() {
 		List<RoundData> data = getData();
@@ -29,6 +35,9 @@ public class StandardModel extends Model {
 		notifyObservers("Stage 0 - Done");
 	}
 	
+	/**
+	 * Speed up all cars.
+	 */
 	@Override
 	public void stage1() {
 		// stage one - speed up
@@ -58,6 +67,9 @@ public class StandardModel extends Model {
 		notifyObservers("Stage 1 - Done");
 	}
 	
+	/**
+	 * Slow down, if speed is greater than distance to next car.
+	 */
 	@Override
 	public void stage2() {
 		// stage 2 - brake
@@ -82,6 +94,7 @@ public class StandardModel extends Model {
 				
 				vehicle = cell.getVehicle();
 				if (vehicle != null) {
+					// get distance to next car
 					distance = getForwardDistance(lane, c);
 					if (vehicle.getSpeed() > distance) {
 						vehicle.setSpeed(distance);
@@ -93,6 +106,9 @@ public class StandardModel extends Model {
 		
 	}
 	
+	/**
+	 * Slow car down by one with probability of Lane.lingerProbability.
+	 */
 	@Override
 	public void stage3() {
 		// stage 3 - randomization (linger)
@@ -124,6 +140,9 @@ public class StandardModel extends Model {
 		notifyObservers("Stage 3 - Done");
 	}
 	
+	/**
+	 * Move all cars.
+	 */
 	@Override
 	public void stage4() {
 		

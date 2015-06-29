@@ -2,16 +2,24 @@ package edu.hm.am.stausimulator.model;
 
 import java.util.List;
 
+/**
+ * Implementation of the starting linger model.
+ * 
+ * @author Luca Spataro
+ *
+ */
 public class StartingLingerModel extends StandardModel {
 	
 	public StartingLingerModel() {
 		super();
 	}
 	
-	protected StartingLingerModel(Road road) {
-		super(road);
-	}
-	
+	/**
+	 * Override stage3 from StandardModel.
+	 */
+	/*
+	 * @see edu.hm.am.stausimulator.model.StandardModel#stage3()
+	 */
 	@Override
 	public void stage3() {
 		// stage 3 - randomization (linger)
@@ -34,6 +42,7 @@ public class StartingLingerModel extends StandardModel {
 				
 				vehicle = cell.getVehicle();
 				if (vehicle != null) {
+					// if speed == 1, linger with greater probability
 					if (RANDOM.nextDouble() < (vehicle.getSpeed() == 1 ? lane.getStartingProbability() : lane.getLingerProbability())) {
 						vehicle.linger();
 					}

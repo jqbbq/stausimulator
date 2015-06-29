@@ -18,7 +18,7 @@ import edu.hm.am.stausimulator.Defaults;
 import edu.hm.am.stausimulator.chart.AVGFlowChart;
 import edu.hm.am.stausimulator.chart.AVGSpeedChart;
 import edu.hm.am.stausimulator.chart.PositionChart;
-import edu.hm.am.stausimulator.chart.VDRChart;
+import edu.hm.am.stausimulator.chart.SpeedChart;
 import edu.hm.am.stausimulator.data.LaneData;
 import edu.hm.am.stausimulator.data.RoundData;
 import edu.hm.am.stausimulator.factory.CellFactory;
@@ -31,50 +31,27 @@ import edu.hm.am.stausimulator.factory.VehicleFactory;
  */
 public class Lane extends Observable {
 	
-	/**
-	 * The Enum Direction.
-	 */
-	public enum Direction {
-		/** The north. */
-		NORTH,
-		/** The south. */
-		SOUTH
-	}
+	private double		lingerProbability;
 	
-	/** The direction. */
-	private final Direction	direction;
-	
-	private double			lingerProbability;
-	
-	private double			startingProbability;
+	private double		startingProbability;
 	
 	/** The cells. */
-	private List<Cell>		cells;
+	private List<Cell>	cells;
 	
-	private Road			road;
+	private Road		road;
 	
-	private Lane			next;
-	private Lane			prev;
+	private Lane		next;
+	private Lane		prev;
 	
-	private LaneData		data;
+	private LaneData	data;
 	
-	private Observer		roadObserver;
+	private Observer	roadObserver;
 	
 	/**
 	 * Instantiates a new lane.
 	 */
 	public Lane(Road road) {
-		this(road, Direction.NORTH);
-	}
-	
-	/**
-	 * Instantiates a new lane.
-	 *
-	 * @param direction the direction
-	 */
-	public Lane(Road road, Direction direction) {
 		this.road = road;
-		this.direction = direction;
 		
 		next = this;
 		prev = this;
@@ -109,15 +86,6 @@ public class Lane extends Observable {
 		this.road = road;
 	}
 	
-	/**
-	 * Gets the direction.
-	 *
-	 * @return the direction
-	 */
-	public Direction getDirection() {
-		return direction;
-	}
-	
 	public Lane getPrev() {
 		return prev;
 	}
@@ -146,6 +114,10 @@ public class Lane extends Observable {
 	
 	public List<Cell> getCells() {
 		return cells;
+	}
+	
+	public void setCells(List<Cell> cells) {
+		this.cells = cells;
 	}
 	
 	public LaneData getData() {
@@ -203,7 +175,7 @@ public class Lane extends Observable {
 		writer.close();
 		
 		// write VDR-Diagramm
-		VDRChart.write(data, new File(directory, "vdr-chart.png"));
+		SpeedChart.write(data, new File(directory, "vdr-chart.png"));
 		PositionChart.write(data, new File(directory, "position-chart.png"));
 		AVGFlowChart.write(data, new File(directory, "average-flow.png"));
 		AVGSpeedChart.write(data, new File(directory, "average-speed.png"));
@@ -241,11 +213,6 @@ public class Lane extends Observable {
 	
 	public void addData(RoundData data) {
 		this.data.add(data);
-	}
-	
-	@Override
-	public String toString() {
-		return super.toString();
 	}
 	
 	private void init() {

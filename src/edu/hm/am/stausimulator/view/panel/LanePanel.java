@@ -132,7 +132,7 @@ public class LanePanel extends Panel {
 		settings.add(cbNextLane, "cell 3 1,grow");
 		
 		tabbedPane = new JTabbedPane();
-		tabbedPane.addTab("VDR Diagramm", new VDRChartPanel(road, laneIndex));
+		tabbedPane.addTab("Speed Diagramm", new SpeedChartPanel(road, laneIndex));
 		tabbedPane.addTab("Position Diagramm", new PositionChartPanel(road, laneIndex));
 		tabbedPane.addTab("Stages", new StagePanel(road, laneIndex));
 		tabbedPane.addTab("Average Velocity", new AVGSpeedChartPanel(road, laneIndex));

@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import edu.hm.am.stausimulator.model.Cell;
 import edu.hm.am.stausimulator.model.Lane;
-import edu.hm.am.stausimulator.model.Lane.Direction;
 import edu.hm.am.stausimulator.model.Model;
 import edu.hm.am.stausimulator.model.Road;
 import edu.hm.am.stausimulator.model.Vehicle;
@@ -36,7 +35,6 @@ public class StandardModelTest {
 		cells = lane.getCells();
 		
 		Assert.assertEquals(1, lane.getMaxVelocity());
-		Assert.assertEquals(Direction.NORTH, lane.getDirection());
 		Assert.assertEquals(0.0, lane.getLingerProbability(), 0.0);
 		Assert.assertEquals(lane, lane.getPrev());
 		Assert.assertEquals(lane, lane.getNext());
@@ -118,7 +116,6 @@ public class StandardModelTest {
 		cells = lane.getCells();
 		
 		Assert.assertEquals(5, lane.getMaxVelocity());
-		Assert.assertEquals(Direction.NORTH, lane.getDirection());
 		Assert.assertEquals(0.0, lane.getLingerProbability(), 0.0);
 		Assert.assertEquals(lane, lane.getPrev());
 		Assert.assertEquals(lane, lane.getNext());

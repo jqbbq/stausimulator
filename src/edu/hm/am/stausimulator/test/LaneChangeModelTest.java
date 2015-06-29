@@ -6,188 +6,203 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import edu.hm.am.stausimulator.factory.CellFactory;
+import edu.hm.am.stausimulator.factory.CellFactory.Distribution;
+import edu.hm.am.stausimulator.factory.VehicleFactory;
 import edu.hm.am.stausimulator.model.Cell;
 import edu.hm.am.stausimulator.model.Lane;
-import edu.hm.am.stausimulator.model.Lane.Direction;
+import edu.hm.am.stausimulator.model.LaneChangeModel;
 import edu.hm.am.stausimulator.model.Model;
 import edu.hm.am.stausimulator.model.Road;
-import edu.hm.am.stausimulator.model.Vehicle;
 
 public class LaneChangeModelTest {
 	
 	@Test
-	public void testMaxVelocity1Density50() {
-		
-		Road road = new Road(1, 10, 1, .5);
-		Model model = road.getModel();
-		Lane lane = null;
-		Cell cell = null;
-		Vehicle vehicle = null;
-		
-		List<Lane> lanes = road.getLanes();
-		List<Vehicle> vehicles = new ArrayList<Vehicle>();
-		List<Integer> positions = new ArrayList<Integer>();
-		List<Cell> cells = null;
-		
-		Assert.assertEquals(1, lanes.size());
-		
-		lane = lanes.get(0);
-		lane.setLingerProbability(0.0);
-		cells = lane.getCells();
-		
-		Assert.assertEquals(1, lane.getMaxVelocity());
-		Assert.assertEquals(Direction.NORTH, lane.getDirection());
-		Assert.assertEquals(0.0, lane.getLingerProbability(), 0.0);
-		Assert.assertEquals(lane, lane.getPrev());
-		Assert.assertEquals(lane, lane.getNext());
-		Assert.assertEquals(10, cells.size());
-		Assert.assertEquals(road, lane.getRoad());
-		
-		int numberOfCars = 0;
-		for (int i = 0; i < cells.size(); i++) {
-			cell = cells.get(i);
-			if (!cell.isFree()) {
-				numberOfCars++;
-				vehicle = cell.getVehicle();
-				Assert.assertEquals(0, vehicle.getSpeed());
-				vehicles.add(vehicle);
-				positions.add(i);
-			}
-		}
-		Assert.assertEquals(5, numberOfCars);
-		
-		model.stage0();
-		
-		// stage 1 - everybody speeds up
-		model.stage1();
-		for (Vehicle v : vehicles) {
-			Assert.assertEquals(1, v.getSpeed());
-		}
-		
-		// stage 2 - nobody has to break
-		model.stage2();
-		for (Vehicle v : vehicles) {
-			Assert.assertEquals(1, v.getSpeed());
-		}
-		
-		// stage 3 - skip
-		
-		// stage 4 - move cars
-		model.stage4();
-		int listIndex = 0;
-		for (int i = 0; i < cells.size(); i++) {
-			cell = cells.get(i);
-			if (!cell.isFree()) {
-				Assert.assertEquals(positions.get(listIndex++) + 1, i);
-			}
-		}
-		
-		// do it again to check if car comes in in the front
-		model.stage0();
-		model.stage1();
-		model.stage2();
-		model.stage3();
-		model.stage4();
-		
-		listIndex = 0;
-		for (int i = 0; i < cells.size(); i++) {
-			cell = cells.get(i);
-			if (!cell.isFree()) {
-				Assert.assertEquals(positions.get(listIndex++).intValue(), i);
-			}
-		}
-	}
-	
-	@Test
 	public void testMaxVelocity5Density50() {
-		Road road = new Road(1, 10, 5, .5);
-		Model model = road.getModel();
+		
+		Road road = new Road(2, 10, 5, .5);
+		
+		List<Lane> lanes = new ArrayList<>();
 		Lane lane = null;
-		Cell cell = null;
-		Vehicle vehicle = null;
 		
-		List<Lane> lanes = road.getLanes();
-		List<Vehicle> vehicles = new ArrayList<Vehicle>();
-		List<Integer> positions = new ArrayList<Integer>();
+		// initiate lane [null, null, null, null, null, 0, 0, 0, 0, 0]
+		lane = new Lane(road);
+		lane.setLingerProbability(0);
+		lane.setCells(CellFactory.createCells(road.getNumberOfCells(), VehicleFactory.createCars((int) (road.getDensity() * road.getNumberOfCells()), road.getMaxVelocity()), Distribution.END));
+		lanes.add(lane);
+		
+		// initiate lane [0, 0, 0, 0, 0, null, null, null, null, null]
+		lane = new Lane(road);
+		lane.setLingerProbability(0);
+		lane.setCells(CellFactory.createCells(road.getNumberOfCells(), VehicleFactory.createCars((int) (road.getDensity() * road.getNumberOfCells()), road.getMaxVelocity()), Distribution.START));
+		lanes.add(lane);
+		
+		Model model = new LaneChangeModel();
+		model.setRoad(road);
+		model.setLanes(lanes);
+		
+		int vehicles = 0;
 		List<Cell> cells = null;
+		Cell cell = null;
 		
-		Assert.assertEquals(1, lanes.size());
-		
+		// check first lane [null, null, null, null, null, 0, 0, 0, 0, 0]
 		lane = lanes.get(0);
-		lane.setLingerProbability(0.0);
 		cells = lane.getCells();
+		for (int i = cells.size() - 1; i >= 0; i--) {
+			cell = cells.get(i);
+			if (!cell.isFree()) {
+				vehicles++;
+			}
+			if (i >= 5) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
+			}
+		}
+		Assert.assertEquals(5, vehicles);
 		
-		Assert.assertEquals(5, lane.getMaxVelocity());
-		Assert.assertEquals(Direction.NORTH, lane.getDirection());
-		Assert.assertEquals(0.0, lane.getLingerProbability(), 0.0);
-		Assert.assertEquals(lane, lane.getPrev());
-		Assert.assertEquals(lane, lane.getNext());
-		Assert.assertEquals(10, cells.size());
-		Assert.assertEquals(road, lane.getRoad());
-		
-		int numberOfCars = 0;
+		// check second lane [0, 0, 0, 0, 0, null, null, null, null, null]
+		vehicles = 0;
+		lane = lanes.get(1);
+		cells = lane.getCells();
 		for (int i = 0; i < cells.size(); i++) {
 			cell = cells.get(i);
 			if (!cell.isFree()) {
-				numberOfCars++;
-				vehicle = cell.getVehicle();
-				Assert.assertEquals(0, vehicle.getSpeed());
-				vehicles.add(vehicle);
-				positions.add(i);
+				vehicles++;
+			}
+			if (i < 5) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
 			}
 		}
-		Assert.assertEquals(5, numberOfCars);
+		Assert.assertEquals(5, vehicles);
 		
 		model.stage0();
-		
-		// stage 1 - everybody speeds up
 		model.stage1();
-		for (Vehicle v : vehicles) {
-			Assert.assertEquals(1, v.getSpeed());
-		}
 		
-		// stage 2 - nobody has to break
-		model.stage2();
-		for (Vehicle v : vehicles) {
-			Assert.assertEquals(1, v.getSpeed());
-		}
-		
-		// stage 3 - skip
-		
-		// stage 4 - move cars
-		model.stage4();
-		int listIndex = 0;
+		// check first lane, we should have the same amount of cars, but an even
+		// distribution [null, 1, null, 1, null, 1, null, 1, null, 1]
+		vehicles = 0;
+		lane = lanes.get(0);
+		cells = lane.getCells();
 		for (int i = 0; i < cells.size(); i++) {
 			cell = cells.get(i);
 			if (!cell.isFree()) {
-				Assert.assertEquals(positions.get(listIndex++) + 1, i);
+				vehicles++;
+			}
+			if (i % 2 == 1) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
 			}
 		}
+		Assert.assertEquals(5, vehicles);
 		
-		model.stage0();
-		// stage 1 - everybody speeds up
-		model.stage1();
-		for (Vehicle v : vehicles) {
-			Assert.assertEquals(2, v.getSpeed());
-		}
-		
-		// stage 2 - everybody has to break
-		model.stage2();
-		for (Vehicle v : vehicles) {
-			Assert.assertEquals(1, v.getSpeed());
-		}
-		
-		// stage 3 - skip
-		
-		// stage 4 - move cars
-		model.stage4();
-		listIndex = 0;
+		// check second lane, we should have the same amount of cars, but an
+		// even distribution [1, null, 1, null, 1, null, 1, null, 1, null]
+		vehicles = 0;
+		lane = lanes.get(1);
+		cells = lane.getCells();
 		for (int i = 0; i < cells.size(); i++) {
 			cell = cells.get(i);
 			if (!cell.isFree()) {
-				Assert.assertEquals(positions.get(listIndex++).intValue(), i);
+				vehicles++;
+			}
+			if (i % 2 == 0) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
 			}
 		}
+		Assert.assertEquals(5, vehicles);
+		
+		model.stage2();
+		
+		// check first lane, we should have the same amount of cars, but an even
+		// distribution [null, 1, null, 1, null, 1, null, 1, null, 1]
+		vehicles = 0;
+		lane = lanes.get(0);
+		cells = lane.getCells();
+		for (int i = 0; i < cells.size(); i++) {
+			cell = cells.get(i);
+			if (!cell.isFree()) {
+				vehicles++;
+			}
+			if (i % 2 == 1) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
+			}
+		}
+		Assert.assertEquals(5, vehicles);
+		
+		// check second lane, we should have the same amount of cars, but an
+		// even distribution [1, null, 1, null, 1, null, 1, null, 1, null]
+		vehicles = 0;
+		lane = lanes.get(1);
+		cells = lane.getCells();
+		for (int i = 0; i < cells.size(); i++) {
+			cell = cells.get(i);
+			if (!cell.isFree()) {
+				vehicles++;
+			}
+			if (i % 2 == 0) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
+			}
+		}
+		Assert.assertEquals(5, vehicles);
+		
+		// skip linger step
+		
+		model.stage4();
+		
+		// check second lane, we should have the same amount of cars, but an
+		// even distribution [1, null, 1, null, 1, null, 1, null, 1, null]
+		vehicles = 0;
+		lane = lanes.get(0);
+		cells = lane.getCells();
+		for (int i = 0; i < cells.size(); i++) {
+			cell = cells.get(i);
+			if (!cell.isFree()) {
+				vehicles++;
+			}
+			if (i % 2 == 0) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
+			}
+		}
+		Assert.assertEquals(5, vehicles);
+		
+		// check first lane, we should have the same amount of cars, but an even
+		// distribution [null, 1, null, 1, null, 1, null, 1, null, 1]
+		vehicles = 0;
+		lane = lanes.get(1);
+		cells = lane.getCells();
+		for (int i = 0; i < cells.size(); i++) {
+			cell = cells.get(i);
+			if (!cell.isFree()) {
+				vehicles++;
+			}
+			if (i % 2 == 1) {
+				Assert.assertFalse(cell.isFree());
+			}
+			else {
+				Assert.assertTrue(cell.isFree());
+			}
+		}
+		Assert.assertEquals(5, vehicles);
+		
 	}
 	
 }

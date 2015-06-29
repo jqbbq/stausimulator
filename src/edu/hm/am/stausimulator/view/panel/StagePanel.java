@@ -137,11 +137,11 @@ public class StagePanel extends Panel {
 				
 				for (int s = 0; s < stages.size(); s++) {
 					
-					y += 10;
+					y += 14;
 					
 					// draw label
 					g.setColor(Color.BLACK);
-					g.setFont(new Font("Arial", Font.PLAIN, 10));
+					g.setFont(new Font("Arial", Font.PLAIN, 14));
 					g.drawString(labels.get(s), x, y);
 					
 					y += 2;

@@ -30,9 +30,6 @@ public class Road extends Observable {
 	
 	private double				density;
 	
-	private boolean				cruiseControl;			// TODO: implement in
-														// logic
-														
 	private Model				model;
 	
 	private Observer			modelObserver;
@@ -126,15 +123,6 @@ public class Road extends Observable {
 		this.density = density;
 		setChanged();
 		notifyObservers("Changed Density");
-	}
-	
-	public boolean isCruiseControl() {
-		return cruiseControl;
-	}
-	
-	public void setCruiseControl(boolean cruiseControl) {
-		this.cruiseControl = cruiseControl;
-		// TODO: implement logic
 	}
 	
 	public Model getModel() {

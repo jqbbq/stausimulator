@@ -62,7 +62,9 @@ public class CellFactory {
 	}
 	
 	private static void startDistribution(List<Cell> cells, List<Vehicle> vehicles) {
-		
+		for (int i = 0; i < vehicles.size(); i++) {
+			cells.get(i).setVehicle(vehicles.get(i));
+		}
 	}
 	
 	private static void centerDistribution(List<Cell> cells, List<Vehicle> vehicles) {
@@ -70,7 +72,9 @@ public class CellFactory {
 	}
 	
 	private static void endDistribution(List<Cell> cells, List<Vehicle> vehicles) {
-		
+		for (int i = 0; i < vehicles.size(); i++) {
+			cells.get(cells.size() - (i + 1)).setVehicle(vehicles.get(i));
+		}
 	}
 	
 	private static void randomDistribution(List<Cell> cells, List<Vehicle> vehicles) {

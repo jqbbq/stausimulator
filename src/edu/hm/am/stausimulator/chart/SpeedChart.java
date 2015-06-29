@@ -17,7 +17,7 @@ import edu.hm.am.stausimulator.data.LaneData;
 import edu.hm.am.stausimulator.data.RoundData;
 import edu.hm.am.stausimulator.view.ImageLoader;
 
-public class VDRChart {
+public class SpeedChart {
 	
 	private static BufferedImage	ARROW_RIGHT;
 	private static BufferedImage	ARROW_UP;
@@ -143,7 +143,7 @@ public class VDRChart {
 	}
 	
 	public static void write(LaneData data, File file) throws IOException {
-		ImageIO.write(VDRChart.draw(data, 0, true, true), "png", file);
+		ImageIO.write(SpeedChart.draw(data, 0, true, true), "png", file);
 	}
 	
 	public static int getHeight(LaneData data, int steps, boolean axis, boolean legend) {
